@@ -1,1 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="G&amp;P">
+<meta name="theme-color" content="#efece4">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({ appId: "156d934b-3f8d-48f4-8fd9-416060b3e207" });
+  });
+</script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin:0; background:#efece4; color:#161616; }
+  header { position:sticky; top:0; background:#efece4; padding:14px 16px; border-bottom:1px solid #ddd9cd; z-index:10; }
+  header h1 { font-size:18px; margin:0; font-weight:700; letter-spacing:-.2px; }
+  .tabs { display:flex; border-bottom:1px solid #ddd9cd; background:#efece4; position:sticky; top:47px; z-index:9; }
+  .tab { flex:1; text-align:center; padding:12px 0; font-size:13px; color:#8e8e93; font-weight:600; position:relative; }
+  .tab.active { color:#0a84ff; border-bottom:2px solid #0a84ff; }
+  .badge { display:inline-block; min-width:16px; height:16px; padding:0 4px; margin-left:3px; background:#ff453a; color:#fff; font-size:10px; font-weight:700; border-radius:9px; line-height:16px; vertical-align:2px; }
+  .pend-item { background:#f5f3ec; border-radius:16px; padding:14px 16px; margin-bottom:12px; border:1px solid #ddd9cd; }
+  .pend-item .top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:2px; }
+  .pend-item .desc { font-weight:700; font-size:14px; }
+  .pend-item .valor { font-weight:700; font-size:14px; color:#ff453a; }
+  .pend-item .meta { font-size:12px; color:#8e8e93; margin-bottom:10px; }
+  .pend-item .row2 { align-items:flex-end; }
+  .pend-item .btnClassificar { background:#0a84ff; color:#fff; border:none; font-weight:700; padding:12px; }
+  .screen { display:none; padding:16px; padding-bottom:90px; }
+  .screen.active { display:block; }
+  .card { background:#f5f3ec; border-radius:16px; padding:16px; margin-bottom:14px; border:1px solid #ddd9cd; }
+  label { display:block; font-size:12px; color:#8e8e93; margin:10px 0 4px; font-weight:600; }
+  select, input, button, textarea { width:100%; padding:12px; font-size:16px; border-radius:10px; border:1px solid #d1d1d6; background:#fff; }
+  .seg { display:flex; gap:8px; }
+  .seg button { flex:1; background:#f2f2f7; border:1px solid #d1d1d6; color:#1c1c1e; }
+  .seg button.on { background:#0a84ff; color:#fff; border-color:#0a84ff; }
+
+  .person-filter { display:flex; gap:22px; justify-content:center; padding:2px 2px 4px; }
+  .person-filter button { display:flex; flex-direction:column; align-items:center; gap:7px; padding:0; border:none; background:none; font-size:11px; font-weight:600; color:#8e8e93; }
+  .person-filter button:active { transform:scale(.95); }
+  .person-filter .avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; opacity:.4; transition:opacity .15s, box-shadow .15s; }
+  .person-filter .avatar svg { width:23px; height:23px; }
+  .person-filter button.on { color:var(--pcor); }
+  .person-filter button.on .avatar { opacity:1; box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--pcor); }
+  .row2 { display:flex; gap:10px; }
+  .row2 > div { flex:1; }
+  .save { margin-top:16px; background:#0a84ff; color:#fff; border:none; font-weight:700; padding:14px; }
+  .save:active { opacity:.8; }
+  .muted { color:#8e8e93; font-size:13px; }
+  .cat-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #f0f0f2; font-size:14px; }
+  .cat-row:last-child { border-bottom:none; }
+  .dot { width:10px; height:10px; border-radius:50%; flex:0 0 auto; }
+  .cat-row .nome { flex:1; }
+  .cat-row .valor { font-weight:600; }
+  .lanc { padding:10px 0; border-bottom:1px solid #f0f0f2; }
+  .lanc .top { display:flex; justify-content:space-between; font-weight:600; font-size:14px; }
+  .toast { position:fixed; bottom:20px; left:16px; right:16px; background:#1c1c1e; color:#fff; padding:12px 16px; border-radius:12px; text-align:center; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:99; }
+  .toast.show { opacity:1; }
+  .spinner { text-align:center; padding:24px; color:#8e8e93; }
+
+  /* --- visual do Resumo (estilo bege/preto) --- */
+  .hero { background:#f5f3ec; color:#161616; border:1px solid #ddd9cd; border-radius:20px; padding:20px; margin-bottom:14px; }
+  .hero .mini-row { display:flex; gap:10px; margin-top:14px; }
+  .hero .mini { flex:1; background:#eae6d9; border-radius:12px; padding:10px 12px; }
+  .hero .mini .t { font-size:11px; color:#8a887f; }
+  .hero .mini .v { font-size:16px; font-weight:700; margin-top:2px; color:#161616; }
+
+  .date-row { display:flex; gap:8px; margin-bottom:12px; }
+  .date-row select { font-weight:700; padding:10px 12px; background:#f5f3ec; border-color:#ddd9cd; }
+
+  .hero-row { display:flex; align-items:center; gap:14px; }
+  .hero-row .hero-num { flex:1; min-width:0; }
+  .hero .label { font-size:12px; color:#8a887f; font-weight:600; }
+  .hero .sobra { font-size:32px; font-weight:700; line-height:1.15; letter-spacing:-.5px; }
+
+  .ring { width:72px; height:72px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+  .ring-inner { width:56px; height:56px; border-radius:50%; background:#f5f3ec; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring-inner .pct { font-size:15px; font-weight:700; color:#161616; line-height:1.1; }
+  .ring-inner .lbl { font-size:7.5px; color:#8a887f; text-transform:uppercase; letter-spacing:.3px; }
+
+  .split-bar { display:flex; height:34px; border-radius:10px; overflow:hidden; background:#eee; }
+  .split-bar .seg { display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; transition:width .4s; }
+
+  .section-title { font-size:15px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .cat-bar-row { margin-bottom:12px; }
+  .cat-bar-row:last-child { margin-bottom:0; }
+  .cat-bar-top { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px; }
+  .cat-bar-top span:last-child { color:#8a887f; font-weight:600; }
+  .cat-bar-track { height:8px; border-radius:5px; background:#e5e1d3; overflow:hidden; }
+  .cat-bar-fill { height:100%; border-radius:5px; }
+  .legend-inline { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .legend-inline span { font-size:11px; background:#f2f2f7; border-radius:20px; padding:4px 10px; display:flex; align-items:center; gap:5px; }
+
+  .pill-tab { display:flex; gap:8px; margin-bottom:12px; }
+  .pill-tab button { flex:1; padding:8px; border-radius:20px; border:1px solid #d1d1d6; background:#f2f2f7; font-size:13px; font-weight:600; color:#1c1c1e; }
+  .pill-tab button.on { background:#1c1c1e; color:#fff; border-color:#1c1c1e; }
+</style>
+</head>
+<body>
+
+<header style="display:flex;justify-content:space-between;align-items:center;">
+  <h1>💙 Financeiro G&amp;P</h1>
+  <button id="btnNotif" style="width:auto;padding:8px 12px;font-size:13px;background:#efece4;border-color:#ddd9cd;">🔔 Ativar avisos</button>
+</header>
+<div class="tabs">
+  <div class="tab active" data-screen="lancar">Lançamento</div>
+  <div class="tab" data-screen="resumo">Resumo</div>
+  <div class="tab" data-screen="historico">Histórico</div>
+  <div class="tab" data-screen="parcelas">Parcelas</div>
+  <div class="tab" data-screen="pendentes">Pendentes<span class="badge" id="pendBadge" style="display:none;"></span></div>
+</div>
+
+<!-- LANÇAR -->
+<div class="screen active" id="lancar">
+  <div class="card">
+    <label>Quem gastou</label>
+    <div class="person-filter" id="quemSeg"></div>
+
+    <label>Tipo</label>
+    <div class="seg" id="tipoSeg">
+      <button data-v="Saída" class="on">Saída</button>
+      <button data-v="Entrada">Entrada</button>
+    </div>
+
+    <label>Classificação</label>
+    <select id="classificacao"></select>
+
+    <label>Descrição</label>
+    <input id="descricao" placeholder="Ex: Ifood, Uber, Farmácia...">
+
+    <div class="row2">
+      <div>
+        <label>Valor (R$)</label>
+        <input id="valor" type="number" inputmode="decimal" placeholder="0,00">
+      </div>
+      <div>
+        <label>Fonte</label>
+        <select id="fonte"></select>
+      </div>
+    </div>
+
+    <label>Parcelado?</label>
+    <div class="row2">
+      <div><input id="parcelaAtual" type="number" placeholder="Parcela atual (ex: 2)"></div>
+      <div><input id="parcelaTotal" type="number" placeholder="Total (ex: 10)"></div>
+    </div>
+
+    <button class="save" id="btnSalvar">Salvar lançamento</button>
+  </div>
+</div>
+
+<!-- RESUMO -->
+<div class="screen" id="resumo">
+  <div class="person-filter" id="quemFiltroResumo" style="margin-bottom:12px;"></div>
+
+  <div class="date-row">
+    <select id="mesSel"></select>
+    <select id="anoSel"></select>
+  </div>
+
+  <div class="hero" id="heroCard">
+    <div class="spinner" style="color:#fff;">Carregando...</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">🧾 Fixo x Variável</div>
+    <div class="split-bar" id="tipoBar"></div>
+    <div id="tipoLegend"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">🍕 Gasto por categoria</div>
+    <div id="catBars"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">🎯 Meta de gastos do casal</div>
+    <div class="row2">
+      <div><input id="metaInput" type="number" placeholder="4000"></div>
+      <div><button class="save" id="btnMeta" style="margin-top:0;">Salvar meta</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">📈 Entradas x Saídas no ano</div>
+    <div id="tendSvg"></div>
+    <div class="legend-inline" style="margin-top:6px;">
+      <span><span class="dot" style="background:#30d158"></span>Entradas</span>
+      <span><span class="dot" style="background:#ff453a"></span>Saídas</span>
+    </div>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div class="screen" id="historico">
+  <div class="person-filter" id="quemFiltroHistorico" style="margin-bottom:12px;"></div>
+  <div class="card">
+    <div class="row2">
+      <div>
+        <label>Categoria</label>
+        <select id="histCategoriaSel"><option value="Todas">Todas</option></select>
+      </div>
+      <div>
+        <label>Período (do Resumo)</label>
+        <div id="histPeriodo" class="muted" style="padding-top:10px;font-weight:700;color:#1c1c1e;">–</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="listaHistorico">
+    <div class="spinner">Carregando...</div>
+  </div>
+</div>
+
+<!-- PARCELAS -->
+<div class="screen" id="parcelas">
+  <div class="person-filter" id="quemFiltroParcelas" style="margin-bottom:12px;"></div>
+
+  <div class="hero" id="parcelasHero">
+    <div class="spinner" style="color:#fff;">Carregando...</div>
+  </div>
+
+  <div class="card" id="listaParcelas">
+    <div class="spinner">Carregando...</div>
+  </div>
+</div>
+
+<!-- PENDENTES -->
+<div class="screen" id="pendentes">
+  <div class="card" style="margin-bottom:12px;">
+    <div class="muted">Gastos que vieram por SMS e o app não conseguiu identificar sozinho. Classifique quando quiser — eles não entram no Resumo até isso.</div>
+  </div>
+  <div id="listaPendentes">
+    <div class="spinner">Carregando...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let CATS = {};
+let state = { quem: null, tipo: 'Saída' };
+let charts = {};
+
+// ---- API: fala com o Google Apps Script via fetch (o app agora mora fora do
+// Apps Script, no GitHub Pages, entao nao da mais pra usar google.script.run) ----
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzxCwLrknfQ_wmrpc84nmW9GO-unCeHnPB5BMpgAJ_OMtALySJ98ghgLsPZUE9XKpQK/exec';
+
+function apiGet(fn, args) {
+  const url = API_BASE + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args || []));
+  return fetch(url).then(r => r.json()).then(r => {
+    if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
+    return r.data;
+  });
+}
+
+function apiPost(fn, args) {
+  return fetch(API_BASE, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [] }) })
+    .then(r => r.json()).then(r => {
+      if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
+      return r.data;
+    });
+}
+
+document.getElementById('btnNotif').addEventListener('click', async () => {
+  if (typeof OneSignal === 'undefined') { showToast('Aguarde o app carregar e tente de novo'); return; }
+  await OneSignal.Notifications.requestPermission();
+  showToast('Notificações ativadas!');
+});
+
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function fmtBRL(n) {
+  return 'R$ ' + (Number(n)||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtBRLcurto(n) {
+  n = Number(n)||0;
+  if (Math.abs(n) >= 1000) return 'R$ ' + (n/1000).toFixed(1).replace('.', ',') + 'k';
+  return 'R$ ' + n.toFixed(0);
+}
+
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.screen).classList.add('active');
+    if (t.dataset.screen === 'resumo') carregarResumo();
+    if (t.dataset.screen === 'historico') carregarHistorico();
+    if (t.dataset.screen === 'parcelas') carregarParcelas();
+    if (t.dataset.screen === 'pendentes') carregarPendentes();
+  });
+});
+
+// ---- filtro Pedro / Giovanna / Casal, compartilhado entre Resumo, Histórico e Parcelas ----
+const QUEM_OPCOES = ['Pedro', 'Giovanna', 'Casal'];
+let filtroQuem = 'Pedro';
+
+const ICONS = {
+  person: '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7v1H4v-1z"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 5 5.5 5c2 0 3.3 1 4.5 2.5C11.2 6 12.5 5 14.5 5 18 5 19.5 8.4 22 11.9 19.5 16.4 12 21 12 21z"/></svg>'
+};
+
+const PESSOA_INFO = {
+  Pedro: { cor:'#0a84ff', tint:'rgba(10,132,255,.12)', fundo:'#0a84ff', icon:'person' },
+  Giovanna: { cor:'#ff375f', tint:'rgba(255,55,95,.12)', fundo:'#ff375f', icon:'person' },
+  Casal: { cor:'#5e5ce6', tint:'rgba(94,92,230,.12)', fundo:'linear-gradient(135deg,#0a84ff 50%,#ff375f 50%)', icon:'heart' }
+};
+
+function criarChipQuem(op, selecionado, onClick) {
+  const info = PESSOA_INFO[op];
+  const b = document.createElement('button');
+  b.dataset.v = op;
+  b.style.setProperty('--pcor', info.cor);
+  b.style.setProperty('--ptint', info.tint);
+  b.innerHTML = `<span class="avatar" style="background:${info.fundo}">${ICONS[info.icon]}</span><span>${op}</span>`;
+  if (selecionado) b.classList.add('on');
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function montarFiltroQuem(id, onChange) {
+  const el = document.getElementById(id);
+  QUEM_OPCOES.forEach(op => {
+    const b = criarChipQuem(op, op === filtroQuem, () => {
+      filtroQuem = op;
+      document.querySelectorAll('.quemFiltro button').forEach(x => x.classList.toggle('on', x.dataset.v === filtroQuem));
+      onChange();
+    });
+    el.appendChild(b);
+  });
+}
+['quemFiltroResumo','quemFiltroHistorico','quemFiltroParcelas'].forEach(id => document.getElementById(id).classList.add('quemFiltro'));
+montarFiltroQuem('quemFiltroResumo', carregarResumo);
+montarFiltroQuem('quemFiltroHistorico', carregarHistorico);
+montarFiltroQuem('quemFiltroParcelas', carregarParcelas);
+
+function montarSelectClassificacao(selectEl) {
+  selectEl.innerHTML = '';
+  Object.keys(CATS).forEach(c => {
+    const info = CATS[c];
+    const grupo = document.createElement('optgroup');
+    grupo.label = (info.emoji||'💠') + ' ' + c;
+    Object.keys(info.subs || {}).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = c + '###' + s;
+      opt.textContent = s;
+      grupo.appendChild(opt);
+    });
+    selectEl.appendChild(grupo);
+  });
+}
+
+// ---- Pendentes: gastos de SMS que o app não conseguiu classificar sozinho ----
+function carregarPendentes() {
+  apiGet('getPendentes').then(function(lista){
+    const badge = document.getElementById('pendBadge');
+    if (lista.length) { badge.style.display = 'inline-block'; badge.textContent = lista.length; }
+    else { badge.style.display = 'none'; }
+
+    const el = document.getElementById('listaPendentes');
+    if (!lista.length) { el.innerHTML = '<div class="card muted">Nenhum gasto pendente de classificação. 🎉</div>'; return; }
+
+    el.innerHTML = '';
+    lista.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'pend-item';
+      item.innerHTML = `
+        <div class="top"><span class="desc">${p.descricao}</span><span class="valor">${fmtBRL(p.valor)}</span></div>
+        <div class="meta">${p.dataLabel} · ${p.quem} · ${p.fonte || ''}</div>
+        <select class="selClass"></select>
+        <div class="row2" style="margin-top:10px;">
+          <div><button class="btnClassificar">Classificar</button></div>
+        </div>
+      `;
+      const sel = item.querySelector('.selClass');
+      montarSelectClassificacao(sel);
+      const btn = item.querySelector('.btnClassificar');
+      btn.addEventListener('click', () => {
+        const [categoria, subcategoria] = sel.value.split('###');
+        btn.disabled = true; btn.textContent = 'Salvando...';
+        apiPost('classificarLancamento', [p.linha, categoria, subcategoria]).then(function(){
+          showToast('Classificado!');
+          item.remove();
+          carregarPendentes();
+        }).catch(function(err){
+          showToast('Erro: ' + err.message);
+          btn.disabled = false; btn.textContent = 'Classificar';
+        });
+      });
+      el.appendChild(item);
+    });
+  }).catch(function(err){ showToast('Erro: ' + err.message); });
+}
+function atualizarBadgePendentes() {
+  apiGet('getPendentes').then(function(lista){
+    const badge = document.getElementById('pendBadge');
+    if (lista.length) { badge.style.display = 'inline-block'; badge.textContent = lista.length; }
+    else { badge.style.display = 'none'; }
+  });
+}
+atualizarBadgePendentes();
+
+// ---- init categorias/pessoas/fontes ----
+apiGet('getCategorias').then(function(data){
+  CATS = data.categorias;
+  montarSelectClassificacao(document.getElementById('classificacao'));
+
+  const histCatSel = document.getElementById('histCategoriaSel');
+  Object.keys(CATS).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = (CATS[c].emoji||'💠') + ' ' + c;
+    histCatSel.appendChild(opt);
+  });
+  histCatSel.addEventListener('change', carregarHistorico);
+
+  const fonteSel = document.getElementById('fonte');
+  data.fontes.forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent=f; fonteSel.appendChild(o); });
+
+  const quemSeg = document.getElementById('quemSeg');
+  state.quem = data.pessoas[0];
+  data.pessoas.forEach((p,i) => {
+    const b = criarChipQuem(p, i === 0, () => {
+      quemSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); state.quem = p;
+    });
+    quemSeg.appendChild(b);
+  });
+}).catch(function(err){ showToast('Erro ao carregar categorias: ' + err.message); });
+
+document.getElementById('tipoSeg').querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.getElementById('tipoSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); state.tipo = b.dataset.v;
+  });
+});
+
+// ---- salvar lançamento ----
+document.getElementById('btnSalvar').addEventListener('click', () => {
+  const valor = document.getElementById('valor').value;
+  if (!valor || Number(valor) <= 0) { showToast('Informe um valor válido'); return; }
+  const [catSelecionada, subSelecionada] = document.getElementById('classificacao').value.split('###');
+  const item = {
+    quem: state.quem,
+    tipo: state.tipo,
+    categoria: catSelecionada,
+    subcategoria: subSelecionada,
+    descricao: document.getElementById('descricao').value,
+    valor: valor,
+    fonte: document.getElementById('fonte').value,
+    parcelaAtual: document.getElementById('parcelaAtual').value,
+    parcelaTotal: document.getElementById('parcelaTotal').value
+  };
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  apiPost('addLancamento', [item]).then(function(){
+    showToast('Lançamento salvo!');
+    document.getElementById('descricao').value = '';
+    document.getElementById('valor').value = '';
+    document.getElementById('parcelaAtual').value = '';
+    document.getElementById('parcelaTotal').value = '';
+    btn.disabled = false; btn.textContent = 'Salvar lançamento';
+  }).catch(function(err){
+    showToast('Erro: ' + err.message);
+    btn.disabled = false; btn.textContent = 'Salvar lançamento';
+  });
+});
+
+// ---- seletores do resumo ----
+const hoje = new Date();
+function initSeletores() {
+  const mesSel = document.getElementById('mesSel');
+  MESES.forEach((m,i) => { const o=document.createElement('option'); o.value=i+1; o.textContent=m; if(i===hoje.getMonth()) o.selected=true; mesSel.appendChild(o); });
+  const anoSel = document.getElementById('anoSel');
+  for (let a=2025; a<=2027; a++){ const o=document.createElement('option'); o.value=a; o.textContent=a; if(a===hoje.getFullYear()) o.selected=true; anoSel.appendChild(o); }
+  mesSel.addEventListener('change', carregarResumo);
+  anoSel.addEventListener('change', carregarResumo);
+}
+initSeletores();
+
+function destruir(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+// Barra proporcional compacta (usada em Pedro x Giovanna e Fixo x Variável)
+function renderSplitBar(id, segmentos) {
+  const total = segmentos.reduce((a,b) => a + b.valor, 0) || 1;
+  document.getElementById(id + 'Bar').innerHTML = segmentos.map(s => {
+    const pct = Math.max(s.valor / total * 100, 0);
+    return `<div class="seg" style="width:${pct}%;background:${s.cor}">${pct > 16 ? fmtBRLcurto(s.valor) : ''}</div>`;
+  }).join('');
+  document.getElementById(id + 'Legend').innerHTML = `<div class="legend-inline">${
+    segmentos.map(s => `<span><span class="dot" style="background:${s.cor}"></span>${s.label} · ${fmtBRL(s.valor)} (${Math.round(s.valor/total*100)}%)</span>`).join('')
+  }</div>`;
+}
+
+function carregarResumo() {
+  const mes = document.getElementById('mesSel').value;
+  const ano = document.getElementById('anoSel').value;
+
+  apiGet('getResumo', [mes, ano, filtroQuem]).then(function(r){
+    // HERO: sobra do mês + anel de meta + entradas/saídas, tudo num card só (primeira dobra)
+    apiGet('getMeta').then(function(meta){
+      document.getElementById('metaInput').value = meta;
+      const pct = meta > 0 ? Math.min(100, (r.totalSaidas/meta)*100) : 0;
+      const over = r.totalSaidas > meta;
+      const cor = over ? '#ff453a' : '#ff8a3d';
+
+      document.getElementById('heroCard').innerHTML = `
+        <div class="hero-row">
+          <div class="hero-num">
+            <div class="label">Gastos no mês</div>
+            <div class="sobra">${fmtBRL(r.totalSaidas)}</div>
+          </div>
+          <div class="ring" style="background:conic-gradient(${cor} ${pct}%, #ddd9cd 0)">
+            <div class="ring-inner"><div class="pct">${Math.round(pct)}%</div><div class="lbl">da meta</div></div>
+          </div>
+        </div>
+        <div class="mini-row">
+          <div class="mini"><div class="t">Entradas</div><div class="v">${fmtBRL(r.totalEntradas)}</div></div>
+          <div class="mini"><div class="t">Sobra</div><div class="v">${fmtBRL(r.saldoLivre)}</div></div>
+        </div>
+      `;
+    });
+
+    // FIXO x VARIÁVEL: barra compacta
+    renderSplitBar('tipo', [
+      { label:'Fixo', valor:r.porTipoAgrupado.Fixo, cor:'#0a84ff' },
+      { label:'Variável', valor:r.porTipoAgrupado.Variavel, cor:'#ff9f0a' }
+    ]);
+
+    // CATEGORIA: barras proporcionais (CSS puro, sem depender de biblioteca externa)
+    const totalCat = r.porCategoria.reduce((a,c)=>a+c.valor,0) || 1;
+    document.getElementById('catBars').innerHTML = r.porCategoria.length ? r.porCategoria.map(c => {
+      const pct = Math.round(c.valor / totalCat * 100);
+      return `<div class="cat-bar-row">
+        <div class="cat-bar-top"><span>${c.emoji} ${c.categoria}</span><span>${fmtBRL(c.valor)} · ${pct}%</span></div>
+        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${c.cor}"></div></div>
+      </div>`;
+    }).join('') : '<div class="muted">Sem gastos categorizados neste mês.</div>';
+  }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
+
+  // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
+  apiGet('getTendencia', [ano, filtroQuem]).then(function(t){
+    renderTendSvg(t.entradas, t.saidas);
+  });
+}
+
+function renderTendSvg(entradas, saidas) {
+  const w = 320, h = 130, pad = 8;
+  const max = Math.max(1, ...entradas, ...saidas);
+  const pontos = (arr) => arr.map((v,i) => {
+    const x = pad + i * (w - pad*2) / (arr.length - 1);
+    const y = h - pad - (v / max) * (h - pad*2);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  document.getElementById('tendSvg').innerHTML = `
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;">
+      <polyline points="${pontos(entradas)}" fill="none" stroke="#30d158" stroke-width="2.5"/>
+      <polyline points="${pontos(saidas)}" fill="none" stroke="#ff453a" stroke-width="2.5"/>
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:#8a887f;margin-top:4px;">
+      ${MESES_ABREV.map(m => `<span>${m}</span>`).join('')}
+    </div>
+  `;
+}
+
+document.getElementById('btnMeta').addEventListener('click', () => {
+  const v = document.getElementById('metaInput').value;
+  apiPost('setMeta', [v]).then(function(){ showToast('Meta atualizada!'); carregarResumo(); });
+});
+
+// ---- histórico (usa o mesmo mês/ano do Resumo + filtro de categoria próprio) ----
+function carregarHistorico() {
+  const mes = document.getElementById('mesSel').value;
+  const ano = document.getElementById('anoSel').value;
+  const categoria = document.getElementById('histCategoriaSel').value;
+  document.getElementById('histPeriodo').textContent = MESES[mes-1] + '/' + ano;
+  document.getElementById('listaHistorico').innerHTML = '<div class="spinner">Carregando...</div>';
+  apiGet('getLancamentosFiltrados', [mes, ano, categoria, filtroQuem]).then(function(lista){
+    document.getElementById('listaHistorico').innerHTML = lista.map(l => {
+      const info = CATS[l.categoria] || {};
+      return `<div class="lanc">
+        <div class="top"><span>${info.emoji||'💠'} ${l.descricao || l.subcategoria}</span><span style="color:${l.tipo==='Entrada'?'#30d158':'#ff453a'}">${l.tipo==='Entrada'?'+':'-'} ${fmtBRL(l.valor)}</span></div>
+        <div class="muted">${l.data} · ${l.quem} · ${l.categoria}${l.subcategoria?' / '+l.subcategoria:''}${l.parcelaAtual?(' · parcela '+l.parcelaAtual+'/'+l.parcelaTotal):''}</div>
+      </div>`;
+    }).join('') || '<div class="muted">Nenhum lançamento nesse filtro.</div>';
+  }).catch(function(err){ showToast('Erro: ' + err.message); });
+}
+
+// ---- parcelas em aberto ----
+function carregarParcelas() {
+  document.getElementById('parcelasHero').innerHTML = '<div class="spinner" style="color:#fff;">Carregando...</div>';
+  document.getElementById('listaParcelas').innerHTML = '<div class="spinner">Carregando...</div>';
+  apiGet('getParcelasAbertas', [filtroQuem]).then(function(r){
+    const miniPessoas = Object.keys(r.porPessoa).map(p =>
+      `<div class="mini"><div class="t">${p}</div><div class="v">${fmtBRL(r.porPessoa[p])}</div></div>`
+    ).join('') || '<div class="mini"><div class="t">Sem parcelas em aberto</div></div>';
+
+    document.getElementById('parcelasHero').innerHTML = `
+      <div class="label">Total ainda a pagar</div>
+      <div class="sobra" style="margin:2px 0 12px;">${fmtBRL(r.total)}</div>
+      <div class="mini-row">${miniPessoas}</div>
+    `;
+
+    document.getElementById('listaParcelas').innerHTML = r.compras.map(c => {
+      const pct = c.parcelaTotal ? Math.min(100, (c.parcelaAtual/c.parcelaTotal*100)) : 0;
+      const faltam = c.parcelaTotal - c.parcelaAtual;
+      return `<div class="lanc">
+        <div class="top"><span>${c.emoji} ${c.descricao}</span><span style="color:#8e8e93;font-weight:600;">${c.parcelaAtual}/${c.parcelaTotal}</span></div>
+        <div style="height:6px;background:#eee;border-radius:4px;margin:8px 0;overflow:hidden;"><div style="width:${pct}%;height:100%;background:#5e5ce6;"></div></div>
+        <div class="muted">${c.quem} · faltam ${faltam} parcela${faltam===1?'':'s'} de ${fmtBRL(c.valorParcela)} · <b style="color:#1c1c1e;">${fmtBRL(c.restante)} restante</b></div>
+      </div>`;
+    }).join('') || '<div class="muted">Nenhuma parcela em aberto.</div>';
+  }).catch(function(err){ showToast('Erro: ' + err.message); });
+}
+</script>
+</body>
+</html>
 <h1>oi</h1>
