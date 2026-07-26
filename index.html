@@ -254,15 +254,28 @@ let charts = {};
 // Apps Script, no GitHub Pages, entao nao da mais pra usar google.script.run) ----
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzxCwLrknfQ_wmrpc84nmW9GO-unCeHnPB5BMpgAJ_OMtALySJ98ghgLsPZUE9XKpQK/exec';
 
+const CACHE_TTL_MS = 20000;
+const apiCache = new Map();
+
+function limparCacheApi() { apiCache.clear(); }
+
 function apiGet(fn, args) {
+  const key = fn + '|' + JSON.stringify(args || []);
+  const hit = apiCache.get(key);
+  if (hit && (Date.now() - hit.time) < CACHE_TTL_MS) return hit.promise;
+
   const url = API_BASE + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args || []));
-  return fetch(url).then(r => r.json()).then(r => {
+  const promise = fetch(url).then(r => r.json()).then(r => {
     if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
     return r.data;
-  });
+  }).catch(err => { apiCache.delete(key); throw err; });
+
+  apiCache.set(key, { promise, time: Date.now() });
+  return promise;
 }
 
 function apiPost(fn, args) {
+  limparCacheApi();
   return fetch(API_BASE, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [] }) })
     .then(r => r.json()).then(r => {
       if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
@@ -512,10 +525,13 @@ function carregarResumo() {
   const mes = document.getElementById('mesSel').value;
   const ano = document.getElementById('anoSel').value;
 
-  apiGet('getResumo', [mes, ano, filtroQuem]).then(function(r){
+  Promise.all([
+    apiGet('getResumo', [mes, ano, filtroQuem]),
+    apiGet('getMeta'),
+    apiGet('getTendencia', [ano, filtroQuem])
+  ]).then(function([r, meta, t]){
     // HERO: sobra do mês + anel de meta + entradas/saídas, tudo num card só (primeira dobra)
-    apiGet('getMeta').then(function(meta){
-      document.getElementById('metaInput').value = meta;
+    document.getElementById('metaInput').value = meta;
       const pct = meta > 0 ? Math.min(100, (r.totalSaidas/meta)*100) : 0;
       const over = r.totalSaidas > meta;
       const cor = over ? '#ff453a' : '#ff8a3d';
@@ -535,7 +551,6 @@ function carregarResumo() {
           <div class="mini"><div class="t">Sobra</div><div class="v">${fmtBRL(r.saldoLivre)}</div></div>
         </div>
       `;
-    });
 
     // FIXO x VARIÁVEL: barra compacta
     renderSplitBar('tipo', [
@@ -552,12 +567,9 @@ function carregarResumo() {
         <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${c.cor}"></div></div>
       </div>`;
     }).join('') : '<div class="muted">Sem gastos categorizados neste mês.</div>';
-  }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
-
   // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
-  apiGet('getTendencia', [ano, filtroQuem]).then(function(t){
     renderTendSvg(t.entradas, t.saidas);
-  });
+  }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
 }
 
 function renderTendSvg(entradas, saidas) {
