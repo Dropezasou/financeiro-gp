@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+🍕<!DOCTYPE html>
 <html>
 <head>
 <base target="_top">
@@ -173,6 +173,37 @@
     <div class="section-title">🧾 Fixo x Variável</div>
     <div class="split-bar" id="tipoBar"></div>
     <div id="tipoLegend"></div>
+  </div>
+
+  <div class="card" id="cardPedroGio">
+    <div class="section-title">🆚 Pedro x Giovanna</div>
+    <div class="split-bar" id="pgBar"></div>
+    <div id="pgLegend"></div>
+  </div>
+
+  <div class="card" id="cardComparado">
+    <div class="section-title">📊 Comparado ao mês passado</div>
+    <div id="comparadoTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="cardCategoriaCresceu">
+    <div class="section-title">🔎 Categoria que mais cresceu</div>
+    <div id="categoriaCresceuTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="cardMaiorGasto">
+    <div class="section-title">💥 Maior gasto do mês</div>
+    <div id="maiorGastoTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="cardDetalheTipo">
+    <div class="section-title">🧭 Detalhamento por tipo</div>
+    <div id="detalheTipoBars"></div>
+  </div>
+
+  <div class="card" id="cardProjecao">
+    <div class="section-title">📈 Projeção até o fim do mês</div>
+    <div id="projecaoTxt" class="muted">Carregando...</div>
   </div>
 
   <div class="card">
@@ -569,6 +600,7 @@ function carregarResumo() {
     }).join('') : '<div class="muted">Sem gastos categorizados neste mês.</div>';
   // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
     renderTendSvg(t.entradas, t.saidas);
+    carregarBlocosExtras(mes, ano, filtroQuem, r);
   }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
 }
 
@@ -581,14 +613,126 @@ function renderTendSvg(entradas, saidas) {
     return x.toFixed(1) + ',' + y.toFixed(1);
   }).join(' ');
   document.getElementById('tendSvg').innerHTML = `
-    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;">
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;touch-action:none;" id="tendSvgEl">
       <polyline points="${pontos(entradas)}" fill="none" stroke="#30d158" stroke-width="2.5"/>
       <polyline points="${pontos(saidas)}" fill="none" stroke="#ff453a" stroke-width="2.5"/>
+      <line id="tendCursor" x1="0" y1="0" x2="0" y2="${h}" stroke="#8a887f" stroke-width="1" stroke-dasharray="3,3" style="display:none;"/>
     </svg>
     <div style="display:flex;justify-content:space-between;font-size:9px;color:#8a887f;margin-top:4px;">
       ${MESES_ABREV.map(m => `<span>${m}</span>`).join('')}
     </div>
+    <div id="tendTooltip" class="muted" style="text-align:center;margin-top:6px;min-height:16px;">Toque no gráfico pra ver os valores de cada mês</div>
   `;
+
+  const svgEl = document.getElementById('tendSvgEl');
+  const cursor = document.getElementById('tendCursor');
+  const tooltip = document.getElementById('tendTooltip');
+
+  function mostrarMesTend(clientX) {
+    const rect = svgEl.getBoundingClientRect();
+    const relX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+    const idx = Math.round((relX / rect.width) * (entradas.length - 1));
+    const xSvg = pad + idx * (w - pad*2) / (entradas.length - 1);
+    cursor.setAttribute('x1', xSvg); cursor.setAttribute('x2', xSvg);
+    cursor.style.display = 'block';
+    tooltip.innerHTML = '<b>' + MESES[idx] + '</b> · Entradas: <span style="color:#30d158">' + fmtBRL(entradas[idx]) + '</span> · Saídas: <span style="color:#ff453a">' + fmtBRL(saidas[idx]) + '</span>';
+  }
+
+  svgEl.addEventListener('touchstart', function(e){ mostrarMesTend(e.touches[0].clientX); }, {passive:true});
+  svgEl.addEventListener('touchmove', function(e){ mostrarMesTend(e.touches[0].clientX); }, {passive:true});
+  svgEl.addEventListener('mousedown', function(e){ mostrarMesTend(e.clientX); });
+  svgEl.addEventListener('mousemove', function(e){ if (e.buttons === 1) mostrarMesTend(e.clientX); });
+}
+
+function mesAnoAnterior(mes, ano) {
+  mes = Number(mes); ano = Number(ano);
+  return mes === 1 ? { mes: 12, ano: ano - 1 } : { mes: mes - 1, ano: ano };
+}
+
+function carregarBlocosExtras(mes, ano, filtroQuem, r) {
+  const prev = mesAnoAnterior(mes, ano);
+
+  apiGet('getResumo', [mes, ano, 'Casal']).then(function(rc){
+    const pedro = (rc.porPessoa.Pedro && rc.porPessoa.Pedro.saidas) || 0;
+    const gio = (rc.porPessoa.Giovanna && rc.porPessoa.Giovanna.saidas) || 0;
+    renderSplitBar('pg', [
+      { label:'Pedro', valor: pedro, cor:'#0a84ff' },
+      { label:'Giovanna', valor: gio, cor:'#ff375f' }
+    ]);
+  }).catch(function(){ document.getElementById('pgLegend').innerHTML = '<div class="muted">Sem dados.</div>'; });
+
+  apiGet('getResumo', [prev.mes, prev.ano, filtroQuem]).then(function(rp){
+    const el = document.getElementById('comparadoTxt');
+    if (!rp.totalSaidas) {
+      el.textContent = 'Sem gastos registrados no mês passado pra comparar.';
+    } else {
+      const pct = ((r.totalSaidas - rp.totalSaidas) / rp.totalSaidas) * 100;
+      const nomeMesPrev = MESES[prev.mes - 1];
+      if (Math.abs(pct) < 1) {
+        el.textContent = '≈ igual a ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
+      } else if (pct > 0) {
+        el.innerHTML = '🔺 <b style="color:#ff453a">' + pct.toFixed(0) + '% a mais</b> que ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
+      } else {
+        el.innerHTML = '🔻 <b style="color:#30d158">' + Math.abs(pct).toFixed(0) + '% a menos</b> que ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
+      }
+    }
+
+    const elCat = document.getElementById('categoriaCresceuTxt');
+    const prevMap = {};
+    rp.porCategoria.forEach(function(c){ prevMap[c.categoria] = c.valor; });
+    let maior = null;
+    r.porCategoria.forEach(function(c){
+      const delta = c.valor - (prevMap[c.categoria] || 0);
+      if (delta > 0 && (!maior || delta > maior.delta)) maior = { categoria: c.categoria, emoji: c.emoji, delta: delta, valor: c.valor, base: prevMap[c.categoria] || 0 };
+    });
+    if (!maior) {
+      elCat.textContent = 'Nenhuma categoria cresceu em relação ao mês passado.';
+    } else {
+      const pctCat = maior.base > 0 ? (maior.delta / maior.base * 100).toFixed(0) + '%' : 'novo gasto';
+      elCat.innerHTML = maior.emoji + ' <b>' + maior.categoria + '</b> subiu ' + fmtBRL(maior.delta) + ' (' + pctCat + ') vs mês passado';
+    }
+  }).catch(function(){
+    document.getElementById('comparadoTxt').textContent = 'Sem dados do mês passado.';
+    document.getElementById('categoriaCresceuTxt').textContent = 'Sem dados do mês passado.';
+  });
+
+  apiGet('getLancamentosFiltrados', [mes, ano, 'Todas', filtroQuem]).then(function(lista){
+    const saidasLista = lista.filter(function(l){ return l.tipo === 'Saída'; });
+    const el = document.getElementById('maiorGastoTxt');
+    if (!saidasLista.length) { el.textContent = 'Nenhum gasto neste mês.'; return; }
+    const maiorL = saidasLista.reduce(function(a,b){ return b.valor > a.valor ? b : a; });
+    el.innerHTML = (maiorL.descricao || maiorL.subcategoria || maiorL.categoria) + ' — <b>' + fmtBRL(maiorL.valor) + '</b><br><span class="muted">' + maiorL.categoria + (maiorL.subcategoria ? ' / ' + maiorL.subcategoria : '') + ' · ' + maiorL.quem + ' · ' + maiorL.data + '</span>';
+  }).catch(function(){ document.getElementById('maiorGastoTxt').textContent = 'Erro ao carregar.'; });
+
+  const CORES_TIPO = {
+    'Fixo Recorrente': '#0a84ff',
+    'Fixo Sazonal': '#5e5ce6',
+    'Fixo Parcelado': '#64d2ff',
+    'Variável Essencial': '#ff9f0a',
+    'Variável Supérfluo': '#ff453a',
+    'Variável Ocasional': '#ffd60a'
+  };
+  const totalTipo = r.porTipo.reduce(function(a,t){ return a + t.valor; }, 0) || 1;
+  document.getElementById('detalheTipoBars').innerHTML = r.porTipo.length ? r.porTipo.map(function(t){
+    const pct = Math.round(t.valor / totalTipo * 100);
+    const cor = CORES_TIPO[t.tipo] || '#8e8e93';
+    return '<div class="cat-bar-row"><div class="cat-bar-top"><span>' + t.tipo + '</span><span>' + fmtBRL(t.valor) + ' · ' + pct + '%</span></div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + cor + '"></div></div></div>';
+  }).join('') : '<div class="muted">Sem gastos neste mês.</div>';
+
+  const elProj = document.getElementById('projecaoTxt');
+  const agora = new Date();
+  if (Number(mes) === agora.getMonth() + 1 && Number(ano) === agora.getFullYear()) {
+    const diaAtual = agora.getDate();
+    const diasNoMes = new Date(Number(ano), Number(mes), 0).getDate();
+    if (diaAtual > 0 && r.totalSaidas > 0) {
+      const projecao = (r.totalSaidas / diaAtual) * diasNoMes;
+      elProj.innerHTML = 'No ritmo atual, o gasto do mês deve fechar em <b>' + fmtBRL(projecao) + '</b> (dia ' + diaAtual + ' de ' + diasNoMes + ').';
+    } else {
+      elProj.textContent = 'Ainda sem gastos suficientes pra projetar.';
+    }
+  } else {
+    elProj.textContent = 'Projeção disponível só para o mês atual.';
+  }
 }
 
 document.getElementById('btnMeta').addEventListener('click', () => {
