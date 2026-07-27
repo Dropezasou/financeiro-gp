@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Lançar gasto</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin:0; background:#efece4; color:#161616; }
+  .card { background:#f5f3ec; border-radius:16px; padding:16px; margin:14px; border:1px solid #ddd9cd; }
+  h1 { font-size:17px; margin:0 0 4px; font-weight:700; letter-spacing:-.2px; }
+  .sub { font-size:12px; color:#8e8e93; margin-bottom:6px; }
+  label { display:block; font-size:12px; color:#8e8e93; margin:10px 0 4px; font-weight:600; }
+  select, input, button { width:100%; padding:12px; font-size:16px; border-radius:10px; border:1px solid #d1d1d6; background:#fff; }
+  .seg { display:flex; gap:8px; }
+  .seg button { flex:1; background:#f2f2f7; border:1px solid #d1d1d6; color:#1c1c1e; }
+  .seg button.on { background:#0a84ff; color:#fff; border-color:#0a84ff; }
+
+  .person-filter { display:flex; gap:22px; justify-content:center; padding:2px 2px 4px; }
+  .person-filter button { display:flex; flex-direction:column; align-items:center; gap:7px; padding:0; border:none; background:none; font-size:11px; font-weight:600; color:#8e8e93; }
+  .person-filter button:active { transform:scale(.95); }
+  .person-filter .avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; opacity:.4; transition:opacity .15s, box-shadow .15s; }
+  .person-filter .avatar svg { width:23px; height:23px; }
+  .person-filter button.on { color:var(--pcor); }
+  .person-filter button.on .avatar { opacity:1; box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--pcor); }
+  .row2 { display:flex; gap:10px; }
+  .row2 > div { flex:1; }
+  .save { margin-top:16px; background:#0a84ff; color:#fff; border:none; font-weight:700; padding:14px; }
+  .save:active { opacity:.8; }
+  .save:disabled { opacity:.5; }
+  .toast { position:fixed; bottom:20px; left:16px; right:16px; background:#1c1c1e; color:#fff; padding:12px 16px; border-radius:12px; text-align:center; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:99; }
+  .toast.show { opacity:1; }
+  .spinner-line { font-size:12px; color:#8e8e93; text-align:center; padding:8px 0; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>💙 Lançar gasto</h1>
+  <div class="sub">Financeiro G&amp;P</div>
+
+  <label>Quem gastou</label>
+  <div class="person-filter" id="quemSeg"></div>
+
+  <label>Tipo</label>
+  <div class="seg" id="tipoSeg">
+    <button data-v="Saída" class="on">Saída</button>
+    <button data-v="Entrada">Entrada</button>
+  </div>
+
+  <label>Classificação</label>
+  <select id="classificacao"><option>Carregando...</option></select>
+
+  <label>Descrição</label>
+  <input id="descricao" placeholder="Ex: Ifood, Uber, Farmácia...">
+
+  <div class="row2">
+    <div>
+      <label>Valor (R$)</label>
+      <input id="valor" type="number" inputmode="decimal" placeholder="0,00">
+    </div>
+    <div>
+      <label>Fonte</label>
+      <select id="fonte"><option>Carregando...</option></select>
+    </div>
+  </div>
+
+  <button class="save" id="btnSalvar" disabled>Carregando categorias...</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzxCwLrknfQ_wmrpc84nmW9GO-unCeHnPB5BMpgAJ_OMtALySJ98ghgLsPZUE9XKpQK/exec';
+
+function apiGet(fn, args) {
+  const url = API_BASE + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args || []));
+  return fetch(url).then(r => r.json()).then(r => {
+    if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
+    return r.data;
+  });
+}
+function apiPost(fn, args) {
+  return fetch(API_BASE, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [] }) })
+    .then(r => r.json()).then(r => {
+      if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
+      return r.data;
+    });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---- chips Pedro / Giovanna / Casal, igual ao app principal ----
+const ICONS = {
+  person: '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7v1H4v-1z"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 5 5.5 5c2 0 3.3 1 4.5 2.5C11.2 6 12.5 5 14.5 5 18 5 19.5 8.4 22 11.9 19.5 16.4 12 21 12 21z"/></svg>'
+};
+const PESSOA_INFO = {
+  Pedro: { cor:'#0a84ff', fundo:'#0a84ff', icon:'person' },
+  Giovanna: { cor:'#ff375f', fundo:'#ff375f', icon:'person' },
+  Casal: { cor:'#5e5ce6', fundo:'linear-gradient(135deg,#0a84ff 50%,#ff375f 50%)', icon:'heart' }
+};
+
+let state = { quem: null, tipo: 'Saída' };
+
+function criarChipQuem(op, selecionado, onClick) {
+  const info = PESSOA_INFO[op];
+  const b = document.createElement('button');
+  b.dataset.v = op;
+  b.style.setProperty('--pcor', info.cor);
+  b.innerHTML = `<span class="avatar" style="background:${info.fundo}">${ICONS[info.icon]}</span><span>${op}</span>`;
+  if (selecionado) b.classList.add('on');
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#quemSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    state.quem = op;
+  });
+  return b;
+}
+
+document.getElementById('tipoSeg').querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.getElementById('tipoSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); state.tipo = b.dataset.v;
+  });
+});
+
+function montarSelectClassificacao(selectEl, CATS) {
+  selectEl.innerHTML = '';
+  Object.keys(CATS).forEach(c => {
+    const info = CATS[c];
+    const grupo = document.createElement('optgroup');
+    grupo.label = (info.emoji||'💠') + ' ' + c;
+    Object.keys(info.subs || {}).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = c + '###' + s;
+      opt.textContent = s;
+      grupo.appendChild(opt);
+    });
+    selectEl.appendChild(grupo);
+  });
+}
+
+apiGet('getCategorias').then(function(data){
+  montarSelectClassificacao(document.getElementById('classificacao'), data.categorias);
+
+  const fonteSel = document.getElementById('fonte');
+  fonteSel.innerHTML = '';
+  data.fontes.forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent=f; fonteSel.appendChild(o); });
+
+  const quemSeg = document.getElementById('quemSeg');
+  state.quem = data.pessoas[0];
+  data.pessoas.forEach((p,i) => quemSeg.appendChild(criarChipQuem(p, i === 0, null)));
+
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = false;
+  btn.textContent = 'Salvar lançamento';
+}).catch(function(err){ showToast('Erro ao carregar: ' + err.message); });
+
+document.getElementById('btnSalvar').addEventListener('click', () => {
+  const valor = document.getElementById('valor').value;
+  if (!valor || Number(valor) <= 0) { showToast('Informe um valor válido'); return; }
+  const [catSelecionada, subSelecionada] = document.getElementById('classificacao').value.split('###');
+  const item = {
+    quem: state.quem,
+    tipo: state.tipo,
+    categoria: catSelecionada,
+    subcategoria: subSelecionada,
+    descricao: document.getElementById('descricao').value,
+    valor: valor,
+    fonte: document.getElementById('fonte').value,
+    parcelaAtual: '',
+    parcelaTotal: ''
+  };
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  apiPost('addLancamento', [item]).then(function(){
+    document.querySelector('.card').innerHTML = '<h1>✅ Gasto salvo!</h1><div class="sub">' + item.descricao + ' · R$ ' + Number(item.valor).toFixed(2).replace('.', ',') + '</div><div class="spinner-line">Pode fechar esta tela.</div>';
+  }).catch(function(err){
+    showToast('Erro: ' + err.message);
+    btn.disabled = false; btn.textContent = 'Salvar lançamento';
+  });
+});
+</script>
+</body>
+</html>
