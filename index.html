@@ -438,7 +438,7 @@ function carregarPendentes() {
       btn.addEventListener('click', () => {
         const [categoria, subcategoria] = sel.value.split('###');
         btn.disabled = true; btn.textContent = 'Salvando...';
-        apiPost('classificarLancamento', [p.linha, categoria, subcategoria]).then(function(){
+                apiPost('classificarLancamento', [p.sheet, p.linha, categoria, subcategoria]).then(function(){
           showToast('Classificado!');
           item.remove();
           carregarPendentes();
