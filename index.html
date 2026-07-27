@@ -101,6 +101,15 @@
   .pill-tab { display:flex; gap:8px; margin-bottom:12px; }
   .pill-tab button { flex:1; padding:8px; border-radius:20px; border:1px solid #d1d1d6; background:#f2f2f7; font-size:13px; font-weight:600; color:#1c1c1e; }
   .pill-tab button.on { background:#1c1c1e; color:#fff; border-color:#1c1c1e; }
+  .cfg-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f0f0f2; }
+  .cfg-row:last-child { border-bottom:none; }
+  .cfg-row .nome { flex:1; font-size:14px; }
+  .cfg-row .setas { display:flex; gap:4px; }
+  .cfg-row .setas button { width:auto; padding:4px 8px; font-size:12px; }
+  .switch { width:44px; height:26px; border-radius:14px; background:#d1d1d6; position:relative; border:none; flex:0 0 auto; }
+  .switch.on { background:#30d158; }
+  .switch::after { content:''; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .15s; }
+  .switch.on::after { left:20px; }
 </style>
 </head>
 <body>
@@ -115,6 +124,7 @@
   <div class="tab" data-screen="historico">Histórico</div>
   <div class="tab" data-screen="parcelas">Parcelas</div>
   <div class="tab" data-screen="pendentes">Pendentes<span class="badge" id="pendBadge" style="display:none;"></span></div>
+  <div class="tab" data-screen="config">⚙️</div>
 </div>
 
 <!-- LANÇAR -->
@@ -160,58 +170,35 @@
 <div class="screen" id="resumo">
   <div class="person-filter" id="quemFiltroResumo" style="margin-bottom:12px;"></div>
 
+  <div class="pill-tab" id="tipoGastoFiltro">
+    <button data-v="Geral" class="on">Geral</button>
+    <button data-v="Cartao">Cartão</button>
+    <button data-v="Pix">Pix</button>
+  </div>
+
   <div class="date-row">
     <select id="mesSel"></select>
     <select id="anoSel"></select>
   </div>
 
-  <div class="hero" id="heroCard">
-    <div class="spinner" style="color:#fff;">Carregando...</div>
+  <div id="bloco_hero">
+    <div class="hero" id="heroCard">
+      <div class="spinner" style="color:#fff;">Carregando...</div>
+    </div>
   </div>
 
-  <div class="card">
+  <div id="bloco_tipoBar" class="card">
     <div class="section-title">🧾 Fixo x Variável</div>
     <div class="split-bar" id="tipoBar"></div>
     <div id="tipoLegend"></div>
   </div>
 
-  <div class="card" id="cardPedroGio">
-    <div class="section-title">🆚 Pedro x Giovanna</div>
-    <div class="split-bar" id="pgBar"></div>
-    <div id="pgLegend"></div>
-  </div>
-
-  <div class="card" id="cardComparado">
-    <div class="section-title">📊 Comparado ao mês passado</div>
-    <div id="comparadoTxt" class="muted">Carregando...</div>
-  </div>
-
-  <div class="card" id="cardCategoriaCresceu">
-    <div class="section-title">🔎 Categoria que mais cresceu</div>
-    <div id="categoriaCresceuTxt" class="muted">Carregando...</div>
-  </div>
-
-  <div class="card" id="cardMaiorGasto">
-    <div class="section-title">💥 Maior gasto do mês</div>
-    <div id="maiorGastoTxt" class="muted">Carregando...</div>
-  </div>
-
-  <div class="card" id="cardDetalheTipo">
-    <div class="section-title">🧭 Detalhamento por tipo</div>
-    <div id="detalheTipoBars"></div>
-  </div>
-
-  <div class="card" id="cardProjecao">
-    <div class="section-title">📈 Projeção até o fim do mês</div>
-    <div id="projecaoTxt" class="muted">Carregando...</div>
-  </div>
-
-  <div class="card">
+  <div id="bloco_catBars" class="card">
     <div class="section-title">🍕 Gasto por categoria</div>
     <div id="catBars"></div>
   </div>
 
-  <div class="card">
+  <div id="bloco_meta" class="card">
     <div class="section-title">🎯 Meta de gastos do casal</div>
     <div class="row2">
       <div><input id="metaInput" type="number" placeholder="4000"></div>
@@ -219,7 +206,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div id="bloco_tendencia" class="card">
     <div class="section-title">📈 Entradas x Saídas no ano</div>
     <div id="tendSvg"></div>
     <div class="legend-inline" style="margin-top:6px;">
@@ -264,12 +251,44 @@
 
 <!-- PENDENTES -->
 <div class="screen" id="pendentes">
+  <div class="person-filter" id="quemFiltroPendentes" style="margin-bottom:12px;"></div>
+  <div class="date-row">
+    <select id="mesPendSel"></select>
+    <select id="anoPendSel"></select>
+  </div>
   <div class="card" style="margin-bottom:12px;">
-    <div class="muted">Gastos que vieram por SMS e o app não conseguiu identificar sozinho. Classifique quando quiser — eles não entram no Resumo até isso.</div>
+    <div class="muted">Gastos que vieram por SMS. Quando o app reconhece a descrição (🤖), já vem com a categoria sugerida — confira e aperte Classificar. Quando não reconhece, fica em branco pra você escolher.</div>
   </div>
   <div id="listaPendentes">
     <div class="spinner">Carregando...</div>
   </div>
+</div>
+
+<!-- CONFIGURAÇÕES -->
+<div class="screen" id="config">
+  <div class="card">
+    <div class="section-title">📊 Blocos do Resumo</div>
+    <div class="muted" style="margin-bottom:10px;">Marque o que deve aparecer e use as setas pra reordenar.</div>
+    <div id="listaBlocos"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">🔔 Notificações</div>
+    <div id="listaNotificacoes"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">➕ Nova notificação personalizada</div>
+    <label>Nome</label>
+    <input id="novaNotifNome" placeholder="Ex: Pagar aluguel">
+    <label>Dia do mês (repete todo mês)</label>
+    <input id="novaNotifDia" type="number" min="1" max="28" placeholder="Ex: 5">
+    <label>Mensagem</label>
+    <input id="novaNotifMsg" placeholder="Ex: Não esquecer de pagar o aluguel">
+    <button class="save" id="btnAddNotif" style="margin-top:12px;">Adicionar</button>
+  </div>
+
+  <button class="save" id="btnSalvarConfig">Salvar configurações</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -285,28 +304,15 @@ let charts = {};
 // Apps Script, no GitHub Pages, entao nao da mais pra usar google.script.run) ----
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzxCwLrknfQ_wmrpc84nmW9GO-unCeHnPB5BMpgAJ_OMtALySJ98ghgLsPZUE9XKpQK/exec';
 
-const CACHE_TTL_MS = 20000;
-const apiCache = new Map();
-
-function limparCacheApi() { apiCache.clear(); }
-
 function apiGet(fn, args) {
-  const key = fn + '|' + JSON.stringify(args || []);
-  const hit = apiCache.get(key);
-  if (hit && (Date.now() - hit.time) < CACHE_TTL_MS) return hit.promise;
-
   const url = API_BASE + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args || []));
-  const promise = fetch(url).then(r => r.json()).then(r => {
+  return fetch(url).then(r => r.json()).then(r => {
     if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
     return r.data;
-  }).catch(err => { apiCache.delete(key); throw err; });
-
-  apiCache.set(key, { promise, time: Date.now() });
-  return promise;
+  });
 }
 
 function apiPost(fn, args) {
-  limparCacheApi();
   return fetch(API_BASE, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [] }) })
     .then(r => r.json()).then(r => {
       if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
@@ -348,10 +354,11 @@ document.querySelectorAll('.tab').forEach(t => {
     if (t.dataset.screen === 'historico') carregarHistorico();
     if (t.dataset.screen === 'parcelas') carregarParcelas();
     if (t.dataset.screen === 'pendentes') carregarPendentes();
+    if (t.dataset.screen === 'config') carregarConfig();
   });
 });
 
-// ---- filtro Pedro / Giovanna / Casal, compartilhado entre Resumo, Histórico e Parcelas ----
+// ---- filtro Pedro / Giovanna / Casal, compartilhado entre Resumo, Histórico, Parcelas e Pendentes ----
 const QUEM_OPCOES = ['Pedro', 'Giovanna', 'Casal'];
 let filtroQuem = 'Pedro';
 
@@ -389,13 +396,32 @@ function montarFiltroQuem(id, onChange) {
     el.appendChild(b);
   });
 }
-['quemFiltroResumo','quemFiltroHistorico','quemFiltroParcelas'].forEach(id => document.getElementById(id).classList.add('quemFiltro'));
+['quemFiltroResumo','quemFiltroHistorico','quemFiltroParcelas','quemFiltroPendentes'].forEach(id => document.getElementById(id).classList.add('quemFiltro'));
 montarFiltroQuem('quemFiltroResumo', carregarResumo);
 montarFiltroQuem('quemFiltroHistorico', carregarHistorico);
 montarFiltroQuem('quemFiltroParcelas', carregarParcelas);
+montarFiltroQuem('quemFiltroPendentes', carregarPendentes);
 
-function montarSelectClassificacao(selectEl) {
+const mesPendSel = document.getElementById('mesPendSel');
+const anoPendSel = document.getElementById('anoPendSel');
+(function initSeletoresPendentes() {
+  const oTodosMes = document.createElement('option'); oTodosMes.value = ''; oTodosMes.textContent = 'Todos os meses';
+  mesPendSel.appendChild(oTodosMes);
+  MESES.forEach((m,i) => { const o=document.createElement('option'); o.value=i+1; o.textContent=m; mesPendSel.appendChild(o); });
+  const oTodosAno = document.createElement('option'); oTodosAno.value = ''; oTodosAno.textContent = 'Todos os anos';
+  anoPendSel.appendChild(oTodosAno);
+  for (let a=2025; a<=2027; a++){ const o=document.createElement('option'); o.value=a; o.textContent=a; anoPendSel.appendChild(o); }
+  mesPendSel.addEventListener('change', carregarPendentes);
+  anoPendSel.addEventListener('change', carregarPendentes);
+})();
+
+function montarSelectClassificacao(selectEl, sugestaoCategoria, sugestaoSubcategoria) {
   selectEl.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— Selecionar categoria —';
+  selectEl.appendChild(placeholder);
+  const valorSugerido = sugestaoCategoria ? (sugestaoCategoria + '###' + (sugestaoSubcategoria||'')) : '';
   Object.keys(CATS).forEach(c => {
     const info = CATS[c];
     const grupo = document.createElement('optgroup');
@@ -408,11 +434,12 @@ function montarSelectClassificacao(selectEl) {
     });
     selectEl.appendChild(grupo);
   });
+  selectEl.value = valorSugerido && [...selectEl.options].some(o => o.value === valorSugerido) ? valorSugerido : '';
 }
 
 // ---- Pendentes: gastos de SMS que o app não conseguiu classificar sozinho ----
 function carregarPendentes() {
-  apiGet('getPendentes').then(function(lista){
+  apiGet('getPendentes', [filtroQuem, mesPendSel.value, anoPendSel.value]).then(function(lista){
     const badge = document.getElementById('pendBadge');
     if (lista.length) { badge.style.display = 'inline-block'; badge.textContent = lista.length; }
     else { badge.style.display = 'none'; }
@@ -424,8 +451,9 @@ function carregarPendentes() {
     lista.forEach(p => {
       const item = document.createElement('div');
       item.className = 'pend-item';
+      const temSugestao = !!p.sugestaoCategoria;
       item.innerHTML = `
-        <div class="top"><span class="desc">${p.descricao}</span><span class="valor">${fmtBRL(p.valor)}</span></div>
+        <div class="top"><span class="desc">${temSugestao?'🤖 ':''}${p.descricao}</span><span class="valor">${fmtBRL(p.valor)}</span></div>
         <div class="meta">${p.dataLabel} · ${p.quem} · ${p.fonte || ''}</div>
         <select class="selClass"></select>
         <div class="row2" style="margin-top:10px;">
@@ -433,12 +461,13 @@ function carregarPendentes() {
         </div>
       `;
       const sel = item.querySelector('.selClass');
-      montarSelectClassificacao(sel);
+      montarSelectClassificacao(sel, p.sugestaoCategoria, p.sugestaoSubcategoria);
       const btn = item.querySelector('.btnClassificar');
       btn.addEventListener('click', () => {
+        if (!sel.value) { showToast('Selecione uma categoria'); return; }
         const [categoria, subcategoria] = sel.value.split('###');
         btn.disabled = true; btn.textContent = 'Salvando...';
-                apiPost('classificarLancamento', [p.sheet, p.linha, categoria, subcategoria]).then(function(){
+        apiPost('classificarLancamento', [p.sheet, p.linha, categoria, subcategoria]).then(function(){
           showToast('Classificado!');
           item.remove();
           carregarPendentes();
@@ -552,17 +581,38 @@ function renderSplitBar(id, segmentos) {
   }</div>`;
 }
 
+let filtroTipoGasto = 'Geral';
+document.getElementById('tipoGastoFiltro').querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.getElementById('tipoGastoFiltro').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    filtroTipoGasto = b.dataset.v;
+    carregarResumo();
+  });
+});
+
+function aplicarLayoutResumo() {
+  if (!CONFIG_ATUAL) return;
+  const container = document.getElementById('resumo');
+  CONFIG_ATUAL.resumoBlocos.forEach(b => {
+    const el = document.getElementById('bloco_' + b.id);
+    if (!el) return;
+    el.style.display = b.visivel ? '' : 'none';
+    container.appendChild(el);
+  });
+}
+
 function carregarResumo() {
   const mes = document.getElementById('mesSel').value;
   const ano = document.getElementById('anoSel').value;
 
-  Promise.all([
-    apiGet('getResumo', [mes, ano, filtroQuem]),
-    apiGet('getMeta'),
-    apiGet('getTendencia', [ano, filtroQuem])
-  ]).then(function([r, meta, t]){
+  if (!CONFIG_ATUAL) { apiGet('getConfig').then(function(cfg){ CONFIG_ATUAL = cfg; aplicarLayoutResumo(); }); }
+  else aplicarLayoutResumo();
+
+  apiGet('getResumo', [mes, ano, filtroQuem, filtroTipoGasto]).then(function(r){
     // HERO: sobra do mês + anel de meta + entradas/saídas, tudo num card só (primeira dobra)
-    document.getElementById('metaInput').value = meta;
+    apiGet('getMeta').then(function(meta){
+      document.getElementById('metaInput').value = meta;
       const pct = meta > 0 ? Math.min(100, (r.totalSaidas/meta)*100) : 0;
       const over = r.totalSaidas > meta;
       const cor = over ? '#ff453a' : '#ff8a3d';
@@ -582,6 +632,7 @@ function carregarResumo() {
           <div class="mini"><div class="t">Sobra</div><div class="v">${fmtBRL(r.saldoLivre)}</div></div>
         </div>
       `;
+    });
 
     // FIXO x VARIÁVEL: barra compacta
     renderSplitBar('tipo', [
@@ -598,10 +649,12 @@ function carregarResumo() {
         <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${c.cor}"></div></div>
       </div>`;
     }).join('') : '<div class="muted">Sem gastos categorizados neste mês.</div>';
-  // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
-    renderTendSvg(t.entradas, t.saidas);
-    carregarBlocosExtras(mes, ano, filtroQuem, r);
   }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
+
+  // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
+  apiGet('getTendencia', [ano, filtroQuem]).then(function(t){
+    renderTendSvg(t.entradas, t.saidas);
+  });
 }
 
 function renderTendSvg(entradas, saidas) {
@@ -613,126 +666,14 @@ function renderTendSvg(entradas, saidas) {
     return x.toFixed(1) + ',' + y.toFixed(1);
   }).join(' ');
   document.getElementById('tendSvg').innerHTML = `
-    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;touch-action:none;" id="tendSvgEl">
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;">
       <polyline points="${pontos(entradas)}" fill="none" stroke="#30d158" stroke-width="2.5"/>
       <polyline points="${pontos(saidas)}" fill="none" stroke="#ff453a" stroke-width="2.5"/>
-      <line id="tendCursor" x1="0" y1="0" x2="0" y2="${h}" stroke="#8a887f" stroke-width="1" stroke-dasharray="3,3" style="display:none;"/>
     </svg>
     <div style="display:flex;justify-content:space-between;font-size:9px;color:#8a887f;margin-top:4px;">
       ${MESES_ABREV.map(m => `<span>${m}</span>`).join('')}
     </div>
-    <div id="tendTooltip" class="muted" style="text-align:center;margin-top:6px;min-height:16px;">Toque no gráfico pra ver os valores de cada mês</div>
   `;
-
-  const svgEl = document.getElementById('tendSvgEl');
-  const cursor = document.getElementById('tendCursor');
-  const tooltip = document.getElementById('tendTooltip');
-
-  function mostrarMesTend(clientX) {
-    const rect = svgEl.getBoundingClientRect();
-    const relX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
-    const idx = Math.round((relX / rect.width) * (entradas.length - 1));
-    const xSvg = pad + idx * (w - pad*2) / (entradas.length - 1);
-    cursor.setAttribute('x1', xSvg); cursor.setAttribute('x2', xSvg);
-    cursor.style.display = 'block';
-    tooltip.innerHTML = '<b>' + MESES[idx] + '</b> · Entradas: <span style="color:#30d158">' + fmtBRL(entradas[idx]) + '</span> · Saídas: <span style="color:#ff453a">' + fmtBRL(saidas[idx]) + '</span>';
-  }
-
-  svgEl.addEventListener('touchstart', function(e){ mostrarMesTend(e.touches[0].clientX); }, {passive:true});
-  svgEl.addEventListener('touchmove', function(e){ mostrarMesTend(e.touches[0].clientX); }, {passive:true});
-  svgEl.addEventListener('mousedown', function(e){ mostrarMesTend(e.clientX); });
-  svgEl.addEventListener('mousemove', function(e){ if (e.buttons === 1) mostrarMesTend(e.clientX); });
-}
-
-function mesAnoAnterior(mes, ano) {
-  mes = Number(mes); ano = Number(ano);
-  return mes === 1 ? { mes: 12, ano: ano - 1 } : { mes: mes - 1, ano: ano };
-}
-
-function carregarBlocosExtras(mes, ano, filtroQuem, r) {
-  const prev = mesAnoAnterior(mes, ano);
-
-  apiGet('getResumo', [mes, ano, 'Casal']).then(function(rc){
-    const pedro = (rc.porPessoa.Pedro && rc.porPessoa.Pedro.saidas) || 0;
-    const gio = (rc.porPessoa.Giovanna && rc.porPessoa.Giovanna.saidas) || 0;
-    renderSplitBar('pg', [
-      { label:'Pedro', valor: pedro, cor:'#0a84ff' },
-      { label:'Giovanna', valor: gio, cor:'#ff375f' }
-    ]);
-  }).catch(function(){ document.getElementById('pgLegend').innerHTML = '<div class="muted">Sem dados.</div>'; });
-
-  apiGet('getResumo', [prev.mes, prev.ano, filtroQuem]).then(function(rp){
-    const el = document.getElementById('comparadoTxt');
-    if (!rp.totalSaidas) {
-      el.textContent = 'Sem gastos registrados no mês passado pra comparar.';
-    } else {
-      const pct = ((r.totalSaidas - rp.totalSaidas) / rp.totalSaidas) * 100;
-      const nomeMesPrev = MESES[prev.mes - 1];
-      if (Math.abs(pct) < 1) {
-        el.textContent = '≈ igual a ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
-      } else if (pct > 0) {
-        el.innerHTML = '🔺 <b style="color:#ff453a">' + pct.toFixed(0) + '% a mais</b> que ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
-      } else {
-        el.innerHTML = '🔻 <b style="color:#30d158">' + Math.abs(pct).toFixed(0) + '% a menos</b> que ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
-      }
-    }
-
-    const elCat = document.getElementById('categoriaCresceuTxt');
-    const prevMap = {};
-    rp.porCategoria.forEach(function(c){ prevMap[c.categoria] = c.valor; });
-    let maior = null;
-    r.porCategoria.forEach(function(c){
-      const delta = c.valor - (prevMap[c.categoria] || 0);
-      if (delta > 0 && (!maior || delta > maior.delta)) maior = { categoria: c.categoria, emoji: c.emoji, delta: delta, valor: c.valor, base: prevMap[c.categoria] || 0 };
-    });
-    if (!maior) {
-      elCat.textContent = 'Nenhuma categoria cresceu em relação ao mês passado.';
-    } else {
-      const pctCat = maior.base > 0 ? (maior.delta / maior.base * 100).toFixed(0) + '%' : 'novo gasto';
-      elCat.innerHTML = maior.emoji + ' <b>' + maior.categoria + '</b> subiu ' + fmtBRL(maior.delta) + ' (' + pctCat + ') vs mês passado';
-    }
-  }).catch(function(){
-    document.getElementById('comparadoTxt').textContent = 'Sem dados do mês passado.';
-    document.getElementById('categoriaCresceuTxt').textContent = 'Sem dados do mês passado.';
-  });
-
-  apiGet('getLancamentosFiltrados', [mes, ano, 'Todas', filtroQuem]).then(function(lista){
-    const saidasLista = lista.filter(function(l){ return l.tipo === 'Saída'; });
-    const el = document.getElementById('maiorGastoTxt');
-    if (!saidasLista.length) { el.textContent = 'Nenhum gasto neste mês.'; return; }
-    const maiorL = saidasLista.reduce(function(a,b){ return b.valor > a.valor ? b : a; });
-    el.innerHTML = (maiorL.descricao || maiorL.subcategoria || maiorL.categoria) + ' — <b>' + fmtBRL(maiorL.valor) + '</b><br><span class="muted">' + maiorL.categoria + (maiorL.subcategoria ? ' / ' + maiorL.subcategoria : '') + ' · ' + maiorL.quem + ' · ' + maiorL.data + '</span>';
-  }).catch(function(){ document.getElementById('maiorGastoTxt').textContent = 'Erro ao carregar.'; });
-
-  const CORES_TIPO = {
-    'Fixo Recorrente': '#0a84ff',
-    'Fixo Sazonal': '#5e5ce6',
-    'Fixo Parcelado': '#64d2ff',
-    'Variável Essencial': '#ff9f0a',
-    'Variável Supérfluo': '#ff453a',
-    'Variável Ocasional': '#ffd60a'
-  };
-  const totalTipo = r.porTipo.reduce(function(a,t){ return a + t.valor; }, 0) || 1;
-  document.getElementById('detalheTipoBars').innerHTML = r.porTipo.length ? r.porTipo.map(function(t){
-    const pct = Math.round(t.valor / totalTipo * 100);
-    const cor = CORES_TIPO[t.tipo] || '#8e8e93';
-    return '<div class="cat-bar-row"><div class="cat-bar-top"><span>' + t.tipo + '</span><span>' + fmtBRL(t.valor) + ' · ' + pct + '%</span></div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + cor + '"></div></div></div>';
-  }).join('') : '<div class="muted">Sem gastos neste mês.</div>';
-
-  const elProj = document.getElementById('projecaoTxt');
-  const agora = new Date();
-  if (Number(mes) === agora.getMonth() + 1 && Number(ano) === agora.getFullYear()) {
-    const diaAtual = agora.getDate();
-    const diasNoMes = new Date(Number(ano), Number(mes), 0).getDate();
-    if (diaAtual > 0 && r.totalSaidas > 0) {
-      const projecao = (r.totalSaidas / diaAtual) * diasNoMes;
-      elProj.innerHTML = 'No ritmo atual, o gasto do mês deve fechar em <b>' + fmtBRL(projecao) + '</b> (dia ' + diaAtual + ' de ' + diasNoMes + ').';
-    } else {
-      elProj.textContent = 'Ainda sem gastos suficientes pra projetar.';
-    }
-  } else {
-    elProj.textContent = 'Projeção disponível só para o mês atual.';
-  }
 }
 
 document.getElementById('btnMeta').addEventListener('click', () => {
@@ -784,6 +725,79 @@ function carregarParcelas() {
     }).join('') || '<div class="muted">Nenhuma parcela em aberto.</div>';
   }).catch(function(err){ showToast('Erro: ' + err.message); });
 }
+
+// ---- Configurações ----
+let CONFIG_ATUAL = null;
+
+function carregarConfig() {
+  apiGet('getConfig').then(function(cfg){
+    CONFIG_ATUAL = cfg;
+    renderBlocosConfig();
+    renderNotificacoesConfig();
+  }).catch(function(err){ showToast('Erro: ' + err.message); });
+}
+
+function renderBlocosConfig() {
+  const el = document.getElementById('listaBlocos');
+  el.innerHTML = CONFIG_ATUAL.resumoBlocos.map((b, i) => `
+    <div class="cfg-row">
+      <input type="checkbox" data-idx="${i}" class="chkBloco" ${b.visivel ? 'checked' : ''} style="width:auto;">
+      <span class="nome">${b.nome}</span>
+      <div class="setas">
+        <button data-idx="${i}" data-dir="-1" class="btnMoverBloco">↑</button>
+        <button data-idx="${i}" data-dir="1" class="btnMoverBloco">↓</button>
+      </div>
+    </div>
+  `).join('');
+  el.querySelectorAll('.chkBloco').forEach(chk => {
+    chk.addEventListener('change', () => { CONFIG_ATUAL.resumoBlocos[chk.dataset.idx].visivel = chk.checked; });
+  });
+  el.querySelectorAll('.btnMoverBloco').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = Number(btn.dataset.idx), dir = Number(btn.dataset.dir), j = i + dir;
+      if (j < 0 || j >= CONFIG_ATUAL.resumoBlocos.length) return;
+      const arr = CONFIG_ATUAL.resumoBlocos;
+      const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+      renderBlocosConfig();
+    });
+  });
+}
+
+function renderNotificacoesConfig() {
+  const el = document.getElementById('listaNotificacoes');
+  el.innerHTML = CONFIG_ATUAL.notificacoes.map((n, i) => `
+    <div class="cfg-row">
+      <span class="nome">${n.nome}${n.tipo==='cartao'?(' <span class="muted">(' + n.diasAntes + ' dia(s) antes)</span>'):''}</span>
+      <button class="switch ${n.ativo?'on':''}" data-idx="${i}"></button>
+    </div>
+  `).join('');
+  el.querySelectorAll('.switch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      const n = CONFIG_ATUAL.notificacoes[sw.dataset.idx];
+      n.ativo = !n.ativo;
+      sw.classList.toggle('on', n.ativo);
+    });
+  });
+}
+
+document.getElementById('btnAddNotif').addEventListener('click', () => {
+  const nome = document.getElementById('novaNotifNome').value.trim();
+  const dia = Number(document.getElementById('novaNotifDia').value);
+  const msg = document.getElementById('novaNotifMsg').value.trim();
+  if (!nome || !dia) { showToast('Preencha nome e dia do mês'); return; }
+  CONFIG_ATUAL.notificacoes.push({ id: 'custom_' + Date.now(), nome: nome, tipo: 'personalizada', diaDoMes: dia, mensagem: msg, ativo: true });
+  renderNotificacoesConfig();
+  document.getElementById('novaNotifNome').value = '';
+  document.getElementById('novaNotifDia').value = '';
+  document.getElementById('novaNotifMsg').value = '';
+  showToast('Adicionada — clique em Salvar configurações');
+});
+
+document.getElementById('btnSalvarConfig').addEventListener('click', () => {
+  apiPost('setConfig', [CONFIG_ATUAL]).then(function(){
+    showToast('Configurações salvas!');
+  }).catch(function(err){ showToast('Erro: ' + err.message); });
+});
 </script>
 </body>
 </html>
