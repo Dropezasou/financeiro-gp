@@ -187,18 +187,49 @@
     </div>
   </div>
 
-  <div id="bloco_tipoBar" class="card">
+  <div class="card" id="bloco_tipoBar">
     <div class="section-title">🧾 Fixo x Variável</div>
     <div class="split-bar" id="tipoBar"></div>
     <div id="tipoLegend"></div>
   </div>
 
-  <div id="bloco_catBars" class="card">
+  <div class="card" id="bloco_pedroGio">
+    <div class="section-title">🆚 Pedro x Giovanna</div>
+    <div class="split-bar" id="pgBar"></div>
+    <div id="pgLegend"></div>
+  </div>
+
+  <div class="card" id="bloco_comparado">
+    <div class="section-title">📊 Comparado ao mês passado</div>
+    <div id="comparadoTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="bloco_categoriaCresceu">
+    <div class="section-title">🔎 Categoria que mais cresceu</div>
+    <div id="categoriaCresceuTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="bloco_maiorGasto">
+    <div class="section-title">💥 Maior gasto do mês</div>
+    <div id="maiorGastoTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="bloco_detalheTipo">
+    <div class="section-title">🧭 Detalhamento por tipo</div>
+    <div id="detalheTipoBars"></div>
+  </div>
+
+  <div class="card" id="bloco_projecao">
+    <div class="section-title">📈 Projeção até o fim do mês</div>
+    <div id="projecaoTxt" class="muted">Carregando...</div>
+  </div>
+
+  <div class="card" id="bloco_catBars">
     <div class="section-title">🍕 Gasto por categoria</div>
     <div id="catBars"></div>
   </div>
 
-  <div id="bloco_meta" class="card">
+  <div class="card" id="bloco_meta">
     <div class="section-title">🎯 Meta de gastos do casal</div>
     <div class="row2">
       <div><input id="metaInput" type="number" placeholder="4000"></div>
@@ -206,7 +237,7 @@
     </div>
   </div>
 
-  <div id="bloco_tendencia" class="card">
+  <div class="card" id="bloco_tendencia">
     <div class="section-title">📈 Entradas x Saídas no ano</div>
     <div id="tendSvg"></div>
     <div class="legend-inline" style="margin-top:6px;">
@@ -304,15 +335,28 @@ let charts = {};
 // Apps Script, no GitHub Pages, entao nao da mais pra usar google.script.run) ----
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzxCwLrknfQ_wmrpc84nmW9GO-unCeHnPB5BMpgAJ_OMtALySJ98ghgLsPZUE9XKpQK/exec';
 
+const CACHE_TTL_MS = 20000;
+const apiCache = new Map();
+
+function limparCacheApi() { apiCache.clear(); }
+
 function apiGet(fn, args) {
+  const key = fn + '|' + JSON.stringify(args || []);
+  const hit = apiCache.get(key);
+  if (hit && (Date.now() - hit.time) < CACHE_TTL_MS) return hit.promise;
+
   const url = API_BASE + '?fn=' + encodeURIComponent(fn) + '&args=' + encodeURIComponent(JSON.stringify(args || []));
-  return fetch(url).then(r => r.json()).then(r => {
+  const promise = fetch(url).then(r => r.json()).then(r => {
     if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
     return r.data;
-  });
+  }).catch(err => { apiCache.delete(key); throw err; });
+
+  apiCache.set(key, { promise, time: Date.now() });
+  return promise;
 }
 
 function apiPost(fn, args) {
+  limparCacheApi();
   return fetch(API_BASE, { method: 'POST', body: JSON.stringify({ fn: fn, args: args || [] }) })
     .then(r => r.json()).then(r => {
       if (!r.ok) throw new Error(r.erro || 'erro desconhecido');
@@ -437,7 +481,7 @@ function montarSelectClassificacao(selectEl, sugestaoCategoria, sugestaoSubcateg
   selectEl.value = valorSugerido && [...selectEl.options].some(o => o.value === valorSugerido) ? valorSugerido : '';
 }
 
-// ---- Pendentes: gastos de SMS que o app não conseguiu classificar sozinho ----
+// ---- Pendentes: gastos de SMS aguardando confirmação da categoria ----
 function carregarPendentes() {
   apiGet('getPendentes', [filtroQuem, mesPendSel.value, anoPendSel.value]).then(function(lista){
     const badge = document.getElementById('pendBadge');
@@ -581,6 +625,7 @@ function renderSplitBar(id, segmentos) {
   }</div>`;
 }
 
+// ---- filtro de forma de pagamento do Resumo (Geral / Cartão / Pix) ----
 let filtroTipoGasto = 'Geral';
 document.getElementById('tipoGastoFiltro').querySelectorAll('button').forEach(b => {
   b.addEventListener('click', () => {
@@ -591,6 +636,7 @@ document.getElementById('tipoGastoFiltro').querySelectorAll('button').forEach(b 
   });
 });
 
+// Mostra/esconde e reordena os blocos do Resumo conforme a aba de Configurações.
 function aplicarLayoutResumo() {
   if (!CONFIG_ATUAL) return;
   const container = document.getElementById('resumo');
@@ -602,16 +648,29 @@ function aplicarLayoutResumo() {
   });
 }
 
+function blocoVisivel_(id) {
+  if (!CONFIG_ATUAL) return true;
+  const b = CONFIG_ATUAL.resumoBlocos.filter(function(x){ return x.id === id; })[0];
+  return !b || b.visivel;
+}
+
 function carregarResumo() {
   const mes = document.getElementById('mesSel').value;
   const ano = document.getElementById('anoSel').value;
 
-  if (!CONFIG_ATUAL) { apiGet('getConfig').then(function(cfg){ CONFIG_ATUAL = cfg; aplicarLayoutResumo(); }); }
-  else aplicarLayoutResumo();
+  const cfgPronta = CONFIG_ATUAL
+    ? Promise.resolve(CONFIG_ATUAL)
+    : apiGet('getConfig').then(function(cfg){ CONFIG_ATUAL = cfg; return cfg; }).catch(function(){ return null; });
 
-  apiGet('getResumo', [mes, ano, filtroQuem, filtroTipoGasto]).then(function(r){
-    // HERO: sobra do mês + anel de meta + entradas/saídas, tudo num card só (primeira dobra)
-    apiGet('getMeta').then(function(meta){
+  cfgPronta.then(function(){
+    aplicarLayoutResumo();
+
+    Promise.all([
+      apiGet('getResumo', [mes, ano, filtroQuem, filtroTipoGasto]),
+      apiGet('getMeta'),
+      apiGet('getTendencia', [ano, filtroQuem])
+    ]).then(function([r, meta, t]){
+      // HERO: sobra do mês + anel de meta + entradas/saídas, tudo num card só (primeira dobra)
       document.getElementById('metaInput').value = meta;
       const pct = meta > 0 ? Math.min(100, (r.totalSaidas/meta)*100) : 0;
       const over = r.totalSaidas > meta;
@@ -632,28 +691,27 @@ function carregarResumo() {
           <div class="mini"><div class="t">Sobra</div><div class="v">${fmtBRL(r.saldoLivre)}</div></div>
         </div>
       `;
-    });
 
-    // FIXO x VARIÁVEL: barra compacta
-    renderSplitBar('tipo', [
-      { label:'Fixo', valor:r.porTipoAgrupado.Fixo, cor:'#0a84ff' },
-      { label:'Variável', valor:r.porTipoAgrupado.Variavel, cor:'#ff9f0a' }
-    ]);
+      // FIXO x VARIÁVEL: barra compacta
+      renderSplitBar('tipo', [
+        { label:'Fixo', valor:r.porTipoAgrupado.Fixo, cor:'#0a84ff' },
+        { label:'Variável', valor:r.porTipoAgrupado.Variavel, cor:'#ff9f0a' }
+      ]);
 
-    // CATEGORIA: barras proporcionais (CSS puro, sem depender de biblioteca externa)
-    const totalCat = r.porCategoria.reduce((a,c)=>a+c.valor,0) || 1;
-    document.getElementById('catBars').innerHTML = r.porCategoria.length ? r.porCategoria.map(c => {
-      const pct = Math.round(c.valor / totalCat * 100);
-      return `<div class="cat-bar-row">
-        <div class="cat-bar-top"><span>${c.emoji} ${c.categoria}</span><span>${fmtBRL(c.valor)} · ${pct}%</span></div>
-        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${c.cor}"></div></div>
-      </div>`;
-    }).join('') : '<div class="muted">Sem gastos categorizados neste mês.</div>';
-  }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
+      // CATEGORIA: barras proporcionais (CSS puro, sem depender de biblioteca externa)
+      const totalCat = r.porCategoria.reduce((a,c)=>a+c.valor,0) || 1;
+      document.getElementById('catBars').innerHTML = r.porCategoria.length ? r.porCategoria.map(c => {
+        const pct = Math.round(c.valor / totalCat * 100);
+        return `<div class="cat-bar-row">
+          <div class="cat-bar-top"><span>${c.emoji} ${c.categoria}</span><span>${fmtBRL(c.valor)} · ${pct}%</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${c.cor}"></div></div>
+        </div>`;
+      }).join('') : '<div class="muted">Sem gastos categorizados neste mês.</div>';
 
-  // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
-  apiGet('getTendencia', [ano, filtroQuem]).then(function(t){
-    renderTendSvg(t.entradas, t.saidas);
+      // TENDÊNCIA anual: SVG puro (sem depender de biblioteca externa)
+      renderTendSvg(t.entradas, t.saidas);
+      carregarBlocosExtras(mes, ano, filtroQuem, r);
+    }).catch(function(err){ showToast('Erro ao carregar resumo: ' + err.message); });
   });
 }
 
@@ -666,14 +724,134 @@ function renderTendSvg(entradas, saidas) {
     return x.toFixed(1) + ',' + y.toFixed(1);
   }).join(' ');
   document.getElementById('tendSvg').innerHTML = `
-    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;">
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block;touch-action:none;" id="tendSvgEl">
       <polyline points="${pontos(entradas)}" fill="none" stroke="#30d158" stroke-width="2.5"/>
       <polyline points="${pontos(saidas)}" fill="none" stroke="#ff453a" stroke-width="2.5"/>
+      <line id="tendCursor" x1="0" y1="0" x2="0" y2="${h}" stroke="#8a887f" stroke-width="1" stroke-dasharray="3,3" style="display:none;"/>
     </svg>
     <div style="display:flex;justify-content:space-between;font-size:9px;color:#8a887f;margin-top:4px;">
       ${MESES_ABREV.map(m => `<span>${m}</span>`).join('')}
     </div>
+    <div id="tendTooltip" class="muted" style="text-align:center;margin-top:6px;min-height:16px;">Toque no gráfico pra ver os valores de cada mês</div>
   `;
+
+  const svgEl = document.getElementById('tendSvgEl');
+  const cursor = document.getElementById('tendCursor');
+  const tooltip = document.getElementById('tendTooltip');
+
+  function mostrarMesTend(clientX) {
+    const rect = svgEl.getBoundingClientRect();
+    const relX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+    const idx = Math.round((relX / rect.width) * (entradas.length - 1));
+    const xSvg = pad + idx * (w - pad*2) / (entradas.length - 1);
+    cursor.setAttribute('x1', xSvg); cursor.setAttribute('x2', xSvg);
+    cursor.style.display = 'block';
+    tooltip.innerHTML = '<b>' + MESES[idx] + '</b> · Entradas: <span style="color:#30d158">' + fmtBRL(entradas[idx]) + '</span> · Saídas: <span style="color:#ff453a">' + fmtBRL(saidas[idx]) + '</span>';
+  }
+
+  svgEl.addEventListener('touchstart', function(e){ mostrarMesTend(e.touches[0].clientX); }, {passive:true});
+  svgEl.addEventListener('touchmove', function(e){ mostrarMesTend(e.touches[0].clientX); }, {passive:true});
+  svgEl.addEventListener('mousedown', function(e){ mostrarMesTend(e.clientX); });
+  svgEl.addEventListener('mousemove', function(e){ if (e.buttons === 1) mostrarMesTend(e.clientX); });
+}
+
+function mesAnoAnterior(mes, ano) {
+  mes = Number(mes); ano = Number(ano);
+  return mes === 1 ? { mes: 12, ano: ano - 1 } : { mes: mes - 1, ano: ano };
+}
+
+// Blocos extras do Resumo. Cada um só busca dados se estiver visível na config,
+// pra não gastar chamada à API com bloco que o usuário desligou.
+function carregarBlocosExtras(mes, ano, filtroQuem, r) {
+  const prev = mesAnoAnterior(mes, ano);
+
+  if (blocoVisivel_('pedroGio')) {
+    apiGet('getResumo', [mes, ano, 'Casal', filtroTipoGasto]).then(function(rc){
+      const pedro = (rc.porPessoa.Pedro && rc.porPessoa.Pedro.saidas) || 0;
+      const gio = (rc.porPessoa.Giovanna && rc.porPessoa.Giovanna.saidas) || 0;
+      renderSplitBar('pg', [
+        { label:'Pedro', valor: pedro, cor:'#0a84ff' },
+        { label:'Giovanna', valor: gio, cor:'#ff375f' }
+      ]);
+    }).catch(function(){ document.getElementById('pgLegend').innerHTML = '<div class="muted">Sem dados.</div>'; });
+  }
+
+  if (blocoVisivel_('comparado') || blocoVisivel_('categoriaCresceu')) {
+    apiGet('getResumo', [prev.mes, prev.ano, filtroQuem, filtroTipoGasto]).then(function(rp){
+      const el = document.getElementById('comparadoTxt');
+      if (!rp.totalSaidas) {
+        el.textContent = 'Sem gastos registrados no mês passado pra comparar.';
+      } else {
+        const pct = ((r.totalSaidas - rp.totalSaidas) / rp.totalSaidas) * 100;
+        const nomeMesPrev = MESES[prev.mes - 1];
+        if (Math.abs(pct) < 1) {
+          el.textContent = '≈ igual a ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
+        } else if (pct > 0) {
+          el.innerHTML = '🔺 <b style="color:#ff453a">' + pct.toFixed(0) + '% a mais</b> que ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
+        } else {
+          el.innerHTML = '🔻 <b style="color:#30d158">' + Math.abs(pct).toFixed(0) + '% a menos</b> que ' + nomeMesPrev + ' (' + fmtBRL(rp.totalSaidas) + ')';
+        }
+      }
+
+      const elCat = document.getElementById('categoriaCresceuTxt');
+      const prevMap = {};
+      rp.porCategoria.forEach(function(c){ prevMap[c.categoria] = c.valor; });
+      let maior = null;
+      r.porCategoria.forEach(function(c){
+        const delta = c.valor - (prevMap[c.categoria] || 0);
+        if (delta > 0 && (!maior || delta > maior.delta)) maior = { categoria: c.categoria, emoji: c.emoji, delta: delta, valor: c.valor, base: prevMap[c.categoria] || 0 };
+      });
+      if (!maior) {
+        elCat.textContent = 'Nenhuma categoria cresceu em relação ao mês passado.';
+      } else {
+        const pctCat = maior.base > 0 ? (maior.delta / maior.base * 100).toFixed(0) + '%' : 'novo gasto';
+        elCat.innerHTML = maior.emoji + ' <b>' + maior.categoria + '</b> subiu ' + fmtBRL(maior.delta) + ' (' + pctCat + ') vs mês passado';
+      }
+    }).catch(function(){
+      document.getElementById('comparadoTxt').textContent = 'Sem dados do mês passado.';
+      document.getElementById('categoriaCresceuTxt').textContent = 'Sem dados do mês passado.';
+    });
+  }
+
+  if (blocoVisivel_('maiorGasto')) {
+    apiGet('getLancamentosFiltrados', [mes, ano, 'Todas', filtroQuem]).then(function(lista){
+      const saidasLista = lista.filter(function(l){ return l.tipo === 'Saída'; });
+      const el = document.getElementById('maiorGastoTxt');
+      if (!saidasLista.length) { el.textContent = 'Nenhum gasto neste mês.'; return; }
+      const maiorL = saidasLista.reduce(function(a,b){ return b.valor > a.valor ? b : a; });
+      el.innerHTML = (maiorL.descricao || maiorL.subcategoria || maiorL.categoria) + ' — <b>' + fmtBRL(maiorL.valor) + '</b><br><span class="muted">' + maiorL.categoria + (maiorL.subcategoria ? ' / ' + maiorL.subcategoria : '') + ' · ' + maiorL.quem + ' · ' + maiorL.data + '</span>';
+    }).catch(function(){ document.getElementById('maiorGastoTxt').textContent = 'Erro ao carregar.'; });
+  }
+
+  const CORES_TIPO = {
+    'Fixo Recorrente': '#0a84ff',
+    'Fixo Sazonal': '#5e5ce6',
+    'Fixo Parcelado': '#64d2ff',
+    'Variável Essencial': '#ff9f0a',
+    'Variável Supérfluo': '#ff453a',
+    'Variável Ocasional': '#ffd60a'
+  };
+  const totalTipo = r.porTipo.reduce(function(a,t){ return a + t.valor; }, 0) || 1;
+  document.getElementById('detalheTipoBars').innerHTML = r.porTipo.length ? r.porTipo.map(function(t){
+    const pct = Math.round(t.valor / totalTipo * 100);
+    const cor = CORES_TIPO[t.tipo] || '#8e8e93';
+    return '<div class="cat-bar-row"><div class="cat-bar-top"><span>' + t.tipo + '</span><span>' + fmtBRL(t.valor) + ' · ' + pct + '%</span></div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + cor + '"></div></div></div>';
+  }).join('') : '<div class="muted">Sem gastos neste mês.</div>';
+
+  const elProj = document.getElementById('projecaoTxt');
+  const agora = new Date();
+  if (Number(mes) === agora.getMonth() + 1 && Number(ano) === agora.getFullYear()) {
+    const diaAtual = agora.getDate();
+    const diasNoMes = new Date(Number(ano), Number(mes), 0).getDate();
+    if (diaAtual > 0 && r.totalSaidas > 0) {
+      const projecao = (r.totalSaidas / diaAtual) * diasNoMes;
+      elProj.innerHTML = 'No ritmo atual, o gasto do mês deve fechar em <b>' + fmtBRL(projecao) + '</b> (dia ' + diaAtual + ' de ' + diasNoMes + ').';
+    } else {
+      elProj.textContent = 'Ainda sem gastos suficientes pra projetar.';
+    }
+  } else {
+    elProj.textContent = 'Projeção disponível só para o mês atual.';
+  }
 }
 
 document.getElementById('btnMeta').addEventListener('click', () => {
@@ -796,6 +974,7 @@ document.getElementById('btnAddNotif').addEventListener('click', () => {
 document.getElementById('btnSalvarConfig').addEventListener('click', () => {
   apiPost('setConfig', [CONFIG_ATUAL]).then(function(){
     showToast('Configurações salvas!');
+    aplicarLayoutResumo();
   }).catch(function(err){ showToast('Erro: ' + err.message); });
 });
 </script>
