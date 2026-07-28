@@ -233,11 +233,8 @@ label { display:block; font-size:var(--fs-xs); color:var(--text-3); font-weight:
 <section class="screen active" id="resumo" aria-labelledby="h-resumo">
   <h2 class="sr-only" id="h-resumo">Resumo do mês</h2>
   <div class="seg-quem" id="quemResumo" role="group" aria-label="Filtrar por pessoa"></div>
-  <div class="filtros-linha" role="group" aria-label="Forma de pagamento">
-    <button class="pill" data-v="Geral" aria-pressed="true">Tudo</button>
-    <button class="pill" data-v="Cartao" aria-pressed="false">Cartão</button>
-    <button class="pill" data-v="Pix" aria-pressed="false">Pix</button>
-    <span class="sel-data">
+  <div class="filtros-linha">
+    <span class="sel-data" style="margin-left:0">
       <label class="sr-only" for="mesSel">Mês</label><select id="mesSel"></select>
       <label class="sr-only" for="anoSel">Ano</label><select id="anoSel"></select>
     </span>
@@ -304,27 +301,30 @@ label { display:block; font-size:var(--fs-xs); color:var(--text-3); font-weight:
     </div>
   </div>
 
-  <button class="link-card" id="cardObjetivos">
+  <div id="bloco_objetivos"><button class="link-card" id="cardObjetivos">
     <span class="lc-ico" style="background:var(--accent-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-alvo"/></svg></span>
     <span class="lc-txt"><span class="lc-t">Objetivos</span><span class="lc-d" id="objResumoTxt">—</span></span>
     <svg class="lc-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-seta"/></svg>
-  </button>
+  </button></div>
 
-  <button class="link-card" id="cardPatrimonio">
+  <div id="bloco_patrimonio"><button class="link-card" id="cardPatrimonio">
     <span class="lc-ico" style="background:#f4f1fb"><svg viewBox="0 0 24 24" fill="none" stroke="var(--casal)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-banco"/></svg></span>
     <span class="lc-txt"><span class="lc-t">Patrimônio</span><span class="lc-d" id="patResumoTxt">—</span></span>
     <svg class="lc-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-seta"/></svg>
-  </button>
+  </button></div>
 </section>
 
 <section class="screen" id="historico" aria-labelledby="h-hist">
   <h2 class="sr-only" id="h-hist">Gastos do mês</h2>
   <div class="seg-quem" id="quemHistorico" role="group" aria-label="Filtrar por pessoa"></div>
   <div class="filtros-linha">
+    <label class="sr-only" for="mesHistSel">Mês</label><select id="mesHistSel" style="flex:1"></select>
+    <label class="sr-only" for="anoHistSel">Ano</label><select id="anoHistSel" style="flex:1"></select>
+  </div>
+  <div class="filtros-linha">
     <label class="sr-only" for="histCategoriaSel">Categoria</label>
     <select id="histCategoriaSel" style="flex:1"><option value="Todas">Todas as categorias</option></select>
   </div>
-  <p class="muted" id="histPeriodo" style="margin:0 0 var(--sp-2)">—</p>
   <p class="muted" style="margin:0 0 var(--sp-3)">Toque em um lançamento para corrigir valor, dono ou categoria.</p>
   <div class="card" id="listaHistorico"><div class="sk" style="height:120px"></div></div>
 </section>
@@ -451,6 +451,17 @@ label { display:block; font-size:var(--fs-xs); color:var(--text-3); font-weight:
     <select id="edClass"></select>
     <div style="margin-top:var(--sp-4)"><button class="btn-primary" id="btnSalvarEdicao">Salvar correção</button></div>
     <div style="margin-top:var(--sp-2)"><button class="btn-secondary" id="btnCancelarEdicao">Cancelar</button></div>
+  </div>
+</div>
+
+<div class="folha" id="folhaDetalhe" role="dialog" aria-modal="true" aria-labelledby="detTitulo">
+  <div class="folha-in">
+    <div class="folha-cab">
+      <h2 id="detTitulo">Detalhe</h2>
+      <button class="icon-btn" id="btnFecharDetalhe" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <p class="muted" id="detResumo" style="margin:0 0 var(--sp-3)"></p>
+    <div id="detLista"></div>
   </div>
 </div>
 
@@ -593,15 +604,9 @@ montarSegQuem('quemHistorico', () => carregarHistorico());
 montarSegQuem('quemParcelas', () => carregarParcelas());
 montarSegQuem('quemPendentes', () => carregarPendentes());
 
-let filtroTipoGasto = 'Geral';
-document.querySelectorAll('#resumo .filtros-linha .pill').forEach(b => {
-  b.addEventListener('click', () => {
-    document.querySelectorAll('#resumo .filtros-linha .pill').forEach(x => x.setAttribute('aria-pressed','false'));
-    b.setAttribute('aria-pressed','true');
-    filtroTipoGasto = b.dataset.v;
-    carregarResumo();
-  });
-});
+// A meta e as entradas sao globais: nao fazem sentido filtradas por cartao ou
+// Pix. O recorte por forma de pagamento vive so no bloco proprio.
+const filtroTipoGasto = 'Geral';
 
 const hoje = new Date();
 (function initSeletores() {
@@ -612,6 +617,14 @@ const hoje = new Date();
   mesSel.addEventListener('change', () => { document.getElementById('tituloTela').textContent = MESES[mesSel.value-1]; carregarResumo(); });
   anoSel.addEventListener('change', carregarResumo);
   document.getElementById('tituloTela').textContent = MESES[hoje.getMonth()];
+})();
+
+(function initSeletoresHist() {
+  const m = document.getElementById('mesHistSel'), a = document.getElementById('anoHistSel');
+  MESES.forEach((n,i) => { const o=document.createElement('option'); o.value=i+1; o.textContent=n; if(i===hoje.getMonth()) o.selected=true; m.appendChild(o); });
+  for (let y=2025; y<=2027; y++){ const o=document.createElement('option'); o.value=y; o.textContent=y; if(y===hoje.getFullYear()) o.selected=true; a.appendChild(o); }
+  m.addEventListener('change', carregarHistorico);
+  a.addEventListener('change', carregarHistorico);
 })();
 
 const mesPendSel = document.getElementById('mesPendSel');
@@ -658,12 +671,11 @@ function renderSplit(idBar, idLegenda, segmentos) {
 function aplicarLayoutResumo() {
   if (!CONFIG_ATUAL) return;
   const container = document.getElementById('resumo');
-  const ancora = document.getElementById('cardObjetivos');
   CONFIG_ATUAL.resumoBlocos.forEach(b => {
     const el = document.getElementById('bloco_' + b.id);
     if (!el) return;
     el.style.display = b.visivel ? '' : 'none';
-    container.insertBefore(el, ancora);
+    container.appendChild(el);
   });
 }
 function blocoVisivel_(id) {
@@ -728,23 +740,24 @@ function carregarResumo() {
         { label:'Variável', valor:r.porTipoAgrupado.Variavel, cor:'var(--c-compras)' }
       ]);
 
-      const fp = r.porFormaPagamento || { Cartao:0, Pix:0, Outros:0 };
+      const fp = r.porFormaPagamento || { Cartao:0, Pix:0, Boleto:0 };
       const segsFp = [
         { label:'Cartão', valor:fp.Cartao || 0, cor:'var(--c-lazer)' },
         { label:'Pix', valor:fp.Pix || 0, cor:'var(--c-transporte)' }
       ];
-      if ((fp.Outros || 0) > 0) segsFp.push({ label:'Outros', valor:fp.Outros, cor:'var(--c-outros)' });
+      if ((fp.Boleto || 0) > 0) segsFp.push({ label:'Boleto', valor:fp.Boleto, cor:'var(--c-outros)' });
       renderSplit('fpBar', 'fpLegend', segsFp);
 
       const totalCat = r.porCategoria.reduce((a,c)=>a+c.valor,0) || 1;
       document.getElementById('catBars').innerHTML = r.porCategoria.length ? r.porCategoria.map(c => {
         const p = Math.round(c.valor / totalCat * 100);
-        return '<div class="cat-linha"><div class="cat-top">' + svgCat(c.categoria) +
+        return '<button type="button" class="cat-linha abrirDet" data-tipo="categoria" data-v="' + esc(c.categoria) + '" style="width:100%;text-align:left;background:none;border:none;padding:0;font-family:inherit;color:inherit;cursor:pointer"><div class="cat-top">' + svgCat(c.categoria) +
           '<span class="nome">' + esc(c.categoria) + '</span>' +
           '<span class="val num">' + fmtBRL(c.valor) + '</span>' +
-          '<span class="muted num">' + p + '%</span></div>' +
-          '<div class="trilho"><div style="width:' + p + '%;background:' + corCat(c.categoria) + '"></div></div></div>';
+          '<span class="muted num">' + p + '%</span>' + ico('seta','var(--text-3)',13) + '</div>' +
+          '<div class="trilho"><div style="width:' + p + '%;background:' + corCat(c.categoria) + '"></div></div></button>';
       }).join('') : '<p class="vazio">Nenhum gasto categorizado ainda neste mês.</p>';
+      ligarDetalhes();
 
       renderTendSvg(t.entradas, t.saidas);
       carregarBlocosExtras(mes, ano, filtroQuem, r);
@@ -758,7 +771,7 @@ function carregarResumo() {
     }).catch(() => {});
 
     apiGet('getPatrimonio').then(p => {
-      document.getElementById('patResumoTxt').textContent = 'Investido ' + fmtBRL0(p.investimento.saldo) + ' · fora do dia a dia';
+      document.getElementById('patResumoTxt').textContent = 'Investido ' + fmtBRL0(p.investimento.saldo) + ' · projeção ' + fmtBRL0(p.investimento.projecaoFimAno || 0) + ' em dez';
     }).catch(() => {});
   });
 }
@@ -870,9 +883,10 @@ function carregarBlocosExtras(mes, ano, quem, r) {
   const totalTipo = r.porTipo.reduce((a,t) => a + t.valor, 0) || 1;
   document.getElementById('detalheTipoBars').innerHTML = r.porTipo.length ? r.porTipo.map(t => {
     const p = Math.round(t.valor / totalTipo * 100);
-    return '<div class="cat-linha"><div class="cat-top"><span class="nome">' + esc(t.tipo) + '</span><span class="val num">' + fmtBRL(t.valor) + '</span><span class="muted num">' + p + '%</span></div>' +
-      '<div class="trilho"><div style="width:' + p + '%;background:' + (CORES_TIPO[t.tipo] || 'var(--c-outros)') + '"></div></div></div>';
+    return '<button type="button" class="cat-linha abrirDet" data-tipo="tipo" data-v="' + esc(t.tipo) + '" style="width:100%;text-align:left;background:none;border:none;padding:0;font-family:inherit;color:inherit;cursor:pointer"><div class="cat-top"><span class="nome">' + esc(t.tipo) + '</span><span class="val num">' + fmtBRL(t.valor) + '</span><span class="muted num">' + p + '%</span>' + ico('seta','var(--text-3)',13) + '</div>' +
+      '<div class="trilho"><div style="width:' + p + '%;background:' + (CORES_TIPO[t.tipo] || 'var(--c-outros)') + '"></div></div></button>';
   }).join('') : '<p class="vazio">Sem gastos neste mês.</p>';
+  ligarDetalhes();
 
   const elProj = document.getElementById('projecaoTxt');
   const agora = new Date();
@@ -886,11 +900,48 @@ function carregarBlocosExtras(mes, ano, quem, r) {
   } else elProj.textContent = 'A projeção aparece só no mês atual.';
 }
 
-function carregarHistorico() {
+function ligarDetalhes() {
+  document.querySelectorAll('.abrirDet').forEach(b => {
+    if (b._lig) return; b._lig = true;
+    b.addEventListener('click', () => abrirDetalhe(b.dataset.tipo, b.dataset.v));
+  });
+}
+
+// Abre a lista de gastos por tras de uma categoria ou tipo, respeitando os
+// filtros de pessoa e mes que ja estao aplicados no Inicio.
+function abrirDetalhe(modo, valor) {
   const mes = document.getElementById('mesSel').value;
   const ano = document.getElementById('anoSel').value;
+  document.getElementById('detTitulo').textContent = valor;
+  document.getElementById('detResumo').textContent = MESES[mes-1] + ' de ' + ano + ' · ' + filtroQuem;
+  document.getElementById('detLista').innerHTML = '<div class="sk" style="height:90px"></div>';
+  document.getElementById('folhaDetalhe').classList.add('aberta');
+
+  const args = modo === 'categoria'
+    ? [mes, ano, valor, filtroQuem]
+    : [mes, ano, 'Todas', filtroQuem, valor];
+
+  apiGet('getLancamentosFiltrados', args).then(lista => {
+    const saidas = lista.filter(l => l.tipo === 'Saída').sort((a,b) => b.valor - a.valor);
+    const total = saidas.reduce((s,l) => s + l.valor, 0);
+    document.getElementById('detResumo').innerHTML = MESES[mes-1] + ' de ' + ano + ' · ' + esc(filtroQuem) +
+      ' · <strong class="num">' + fmtBRL(total) + '</strong> em ' + saidas.length + (saidas.length === 1 ? ' lançamento' : ' lançamentos');
+    document.getElementById('detLista').innerHTML = saidas.length ? saidas.map(l =>
+      '<div class="lanc" style="cursor:default"><div class="lanc-top">' +
+      '<span style="display:flex;align-items:center;gap:8px;min-width:0">' + svgCat(l.categoria) +
+      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(l.descricao || l.subcategoria) + '</span></span>' +
+      '<span class="num" style="white-space:nowrap">' + fmtBRL(l.valor) + '</span></div>' +
+      '<div class="muted">' + esc(l.data) + ' · ' + esc(l.quem) + (l.subcategoria ? ' · ' + esc(l.subcategoria) : '') + '</div></div>'
+    ).join('') : '<p class="vazio">Nenhum lançamento aqui.</p>';
+  }).catch(err => { document.getElementById('detLista').innerHTML = '<p class="vazio">Erro: ' + esc(err.message) + '</p>'; });
+}
+document.getElementById('btnFecharDetalhe').addEventListener('click', () => document.getElementById('folhaDetalhe').classList.remove('aberta'));
+document.getElementById('folhaDetalhe').addEventListener('click', e => { if (e.target.id === 'folhaDetalhe') e.target.classList.remove('aberta'); });
+
+function carregarHistorico() {
+  const mes = document.getElementById('mesHistSel').value;
+  const ano = document.getElementById('anoHistSel').value;
   const categoria = document.getElementById('histCategoriaSel').value;
-  document.getElementById('histPeriodo').textContent = MESES[mes-1] + ' de ' + ano;
   document.getElementById('listaHistorico').innerHTML = '<div class="sk" style="height:120px"></div>';
   apiGet('getLancamentosFiltrados', [mes, ano, categoria, filtroQuem]).then(lista => {
     const el = document.getElementById('listaHistorico');
@@ -907,7 +958,7 @@ function carregarHistorico() {
         (l.subcategoria ? ' / ' + esc(l.subcategoria) : '') + (l.parcelaAtual ? ' · parcela ' + esc(l.parcelaAtual) + '/' + esc(l.parcelaTotal) : '') +
         (l.editavel ? ico('lapis','var(--text-3)',13) : '') + '</div>';
       if (l.editavel) b.addEventListener('click', () => abrirEdicao(l));
-      else b.addEventListener('click', () => showToast('Esse valor vem do Balanço e é um total do mês — edite na planilha'));
+      else b.addEventListener('click', () => showToast('Esse lançamento não pode ser editado pelo app'));
       el.appendChild(b);
     });
   }).catch(err => showToast('Erro: ' + err.message));
@@ -915,14 +966,24 @@ function carregarHistorico() {
 
 function abrirEdicao(l) {
   edicaoAtual = l;
+  // Linhas do Balanço (salários, Mensal Sensia) só permitem mudar o valor:
+  // lá cada célula é um total do mês, não tem dono nem categoria por linha.
+  const doBalanco = l.sheet && l.sheet.indexOf('Balan') === 0;
+  document.getElementById('folhaTitulo').textContent = doBalanco ? 'Corrigir valor' : 'Corrigir lançamento';
   document.getElementById('edResumo').textContent = (l.descricao || l.subcategoria) + ' · ' + l.data;
   document.getElementById('edValor').value = l.valor;
-  montarSelectClassificacao(document.getElementById('edClass'), l.categoria, l.subcategoria);
-  montarSegQuem('edQuem', null, l.quem, (op, el) => {
-    edicaoAtual.novoQuem = op;
-    el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === op)));
-  });
-  edicaoAtual.novoQuem = l.quem;
+  document.getElementById('edQuem').parentElement.querySelectorAll('#lb-edquem').forEach(x => x.style.display = doBalanco ? 'none' : '');
+  document.getElementById('edQuem').style.display = doBalanco ? 'none' : '';
+  document.getElementById('edClass').style.display = doBalanco ? 'none' : '';
+  document.querySelector('label[for="edClass"]').style.display = doBalanco ? 'none' : '';
+  if (!doBalanco) {
+    montarSelectClassificacao(document.getElementById('edClass'), l.categoria, l.subcategoria);
+    montarSegQuem('edQuem', null, l.quem, (op, el) => {
+      edicaoAtual.novoQuem = op;
+      el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === op)));
+    });
+    edicaoAtual.novoQuem = l.quem;
+  }
   document.getElementById('folhaEditar').classList.add('aberta');
 }
 function fecharEdicao() {
@@ -936,10 +997,15 @@ document.getElementById('folhaEditar').addEventListener('click', e => { if (e.ta
 document.getElementById('btnSalvarEdicao').addEventListener('click', () => {
   if (!edicaoAtual) return;
   const btn = document.getElementById('btnSalvarEdicao');
-  const sel = document.getElementById('edClass').value;
+  const doBalanco = edicaoAtual.sheet && edicaoAtual.sheet.indexOf('Balan') === 0;
   const campos = { valor: document.getElementById('edValor').value };
-  if (sel) { const p = sel.split('###'); campos.categoria = p[0]; campos.subcategoria = p[1] || ''; }
-  if (edicaoAtual.novoQuem && edicaoAtual.novoQuem !== edicaoAtual.quem) campos.quem = edicaoAtual.novoQuem;
+  if (doBalanco) {
+    campos.col = edicaoAtual.col;
+  } else {
+    const sel = document.getElementById('edClass').value;
+    if (sel) { const p = sel.split('###'); campos.categoria = p[0]; campos.subcategoria = p[1] || ''; }
+    if (edicaoAtual.novoQuem && edicaoAtual.novoQuem !== edicaoAtual.quem) campos.quem = edicaoAtual.novoQuem;
+  }
   btn.disabled = true; btn.textContent = 'Salvando…';
   apiPost('editarLancamento', [edicaoAtual.sheet, edicaoAtual.linha, campos]).then(res => {
     showToast(res && res.aviso ? 'Salvo — ' + res.aviso : 'Correção salva');
@@ -961,6 +1027,7 @@ function carregarParcelas() {
     document.getElementById('parcelasHero').innerHTML =
       '<div class="hero-label">Ainda falta pagar</div>' +
       '<p class="hero-valor num" style="margin:2px 0 0">' + fmtBRL(r.total) + '</p>' +
+      '<p class="muted" style="margin:6px 0 0">Já pagaram <strong class="num" style="color:var(--success)">' + fmtBRL(r.totalPago || 0) + '</strong> destas compras.</p>' +
       (minis ? '<div class="mini-row">' + minis + '</div>' : '');
     document.getElementById('listaParcelas').innerHTML = r.compras.length ? r.compras.map(c => {
       const pct = c.parcelaTotal ? Math.min(100, (c.parcelaAtual/c.parcelaTotal*100)) : 0;
@@ -969,7 +1036,8 @@ function carregarParcelas() {
         '<span class="nome" style="color:var(--text);font-weight:500">' + esc(c.descricao) + '</span>' +
         '<span class="muted num">' + c.parcelaAtual + '/' + c.parcelaTotal + '</span></div>' +
         '<div class="trilho"><div style="width:' + pct + '%;background:' + corCat(c.categoria) + '"></div></div>' +
-        '<div class="muted" style="margin-top:5px">' + esc(c.quem) + ' · faltam ' + faltam + ' de <span class="num">' + fmtBRL(c.valorParcela) + '</span> · <strong style="color:var(--text)" class="num">' + fmtBRL(c.restante) + '</strong></div></div>';
+        '<div class="muted" style="margin-top:5px">' + esc(c.quem) + ' · faltam ' + faltam + ' de <span class="num">' + fmtBRL(c.valorParcela) + '</span></div>' +
+        '<div class="muted" style="margin-top:2px">Pago <strong class="num" style="color:var(--success)">' + fmtBRL(c.pago || 0) + '</strong> · falta <strong class="num" style="color:var(--text)">' + fmtBRL(c.restante) + '</strong> · total <span class="num">' + fmtBRL(c.total || 0) + '</span></div></div>';
     }).join('') : '<p class="vazio">Nenhuma parcela em aberto.</p>';
   }).catch(err => showToast('Erro: ' + err.message));
 }
@@ -1087,19 +1155,33 @@ function carregarPatrimonio() {
     const serie = (p.investimento.serie || []).filter(v => v !== null && v !== undefined);
     const primeiro = serie.length ? serie[0] : 0;
     const variacao = p.investimento.saldo - primeiro;
+    const proj = p.investimento.projecaoFimAno || 0;
+    const dif = Math.round(proj - (p.investimento.saldoPlanilha || 0));
 
     el.innerHTML =
       '<div class="card">' +
         '<div class="hero-label">Investido hoje</div>' +
         '<p class="hero-valor num">' + fmtBRL(p.investimento.saldo) + '</p>' +
         '<p class="muted" style="margin:4px 0 0">Posição de ' + esc(p.investimento.mesLabel) + '. ' +
-        (variacao >= 0 ? 'Cresceu ' : 'Caiu ') + '<span class="num">' + fmtBRL(Math.abs(variacao)) + '</span> no ano.</p>' +
+        (variacao >= 0 ? 'Cresceu ' : 'Caiu ') + '<span class="num">' + fmtBRL(Math.abs(variacao)) + '</span> desde o começo do ano.</p>' +
+        '<div class="mini-row"><div class="mini"><div class="t">Projeção para dezembro</div><div class="v num">' + fmtBRL(proj) + '</div></div>' +
+        (dif !== 0 ? '<div class="mini"><div class="t">Planilha projeta</div><div class="v num">' + fmtBRL(p.investimento.saldoPlanilha) + '</div></div>' : '') + '</div>' +
+        (dif !== 0 ? '<div class="dica ' + (dif > 0 ? 'ok' : 'alerta') + '" style="margin-top:var(--sp-3)">' + ico('dica','currentColor') +
+          '<span>O app projeta <strong class="num">' + fmtBRL(Math.abs(dif)) + '</strong> ' + (dif > 0 ? 'a mais' : 'a menos') +
+          ' que a planilha, porque usa os gastos reais de cartão e Pix no lugar da linha planejada de Gastos pessoais.</span></div>' : '') +
       '</div>' +
+      '<div class="card"><h3 class="card-title">' + ico('tendencia','var(--accent)',18) + 'Sobra de cada mês</h3>' +
+        '<p class="muted" style="margin:0 0 var(--sp-3)">Tudo que entrou menos tudo que saiu. O que sobra vai para o investimento; o que falta sai dele.</p>' +
+        (p.resultadoMes || []).map(function(v, i) {
+          if (!v) return '';
+          return '<div class="cat-linha"><div class="cat-top"><span class="nome">' + MESES[i] + '</span>' +
+            '<span class="val num" style="color:' + (v >= 0 ? 'var(--success)' : 'var(--danger)') + '">' + (v >= 0 ? '+' : '−') + ' ' + fmtBRL(Math.abs(v)) + '</span></div></div>';
+        }).join('') + '</div>' +
       '<div class="card"><h3 class="card-title">' + ico('banco','var(--success)',18) + 'Entradas do ano</h3>' +
-        '<p class="muted" style="margin:-6px 0 12px">Total <strong class="num" style="color:var(--success)">' + fmtBRL(p.totalEntradas) + '</strong></p>' +
+        '<p class="muted" style="margin:0 0 var(--sp-3)">Total <strong class="num" style="color:var(--success)">' + fmtBRL(p.totalEntradas) + '</strong></p>' +
         lista(p.entradas, 'var(--success)', '+') + '</div>' +
       '<div class="card"><h3 class="card-title">' + ico('banco','var(--casal)',18) + 'Saídas do ano</h3>' +
-        '<p class="muted" style="margin:-6px 0 12px">Total <strong class="num" style="color:var(--danger)">' + fmtBRL(p.totalSaidas) + '</strong></p>' +
+        '<p class="muted" style="margin:0 0 var(--sp-3)">Total <strong class="num" style="color:var(--danger)">' + fmtBRL(p.totalSaidas) + '</strong></p>' +
         lista(p.saidas, 'var(--danger)', '−') + '</div>';
   }).catch(err => showToast('Erro: ' + err.message));
 }
